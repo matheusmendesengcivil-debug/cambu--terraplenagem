@@ -1,0 +1,408 @@
+import React, { useState, useEffect } from 'react'
+import { useAuth } from '@/hooks/use-auth'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import {
+  Camera,
+  ArrowLeft,
+  Sparkles,
+  CheckCircle2,
+  AlertTriangle,
+  Upload,
+  FileText,
+  Clock,
+  RefreshCw,
+} from 'lucide-react'
+import {
+  getMaquinas,
+  getObras,
+  getClientes,
+  getFuncionarios,
+  getTiposServico,
+  saveApontamento,
+} from '@/services/cambui'
+import { processarFotoFolhaIA, LeituraFolhaResultado } from '@/services/ocr-vision'
+import { Maquina, Obra, Cliente, Funcionario, TipoServico } from '@/types/cambui'
+import { toast } from 'sonner'
+
+interface FotoFolhaViewProps {
+  onBack: () => void
+  onSuccess: () => void
+}
+
+export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess }) => {
+  const { usuario, user } = useAuth()
+
+  const [etapa, setEtapa] = useState<'captura' | 'processando' | 'conferencia'>('captura')
+  const [fotoUrl, setFotoUrl] = useState<string>(
+    'https://img.usecurling.com/p/800/1000?q=document%20notes&color=gray',
+  )
+  const [loading, setLoading] = useState(false)
+
+  const [maquinas, setMaquinas] = useState<Maquina[]>([])
+  const [obras, setObras] = useState<Obra[]>([])
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([])
+  const [tiposServico, setTiposServico] = useState<TipoServico[]>([])
+
+  // Extracted values for conference screen
+  const [data, setData] = useState('')
+  const [funcionarioId, setFuncionarioId] = useState('')
+  const [maquinaId, setMaquinaId] = useState('')
+  const [obraId, setObraId] = useState('')
+  const [horimetroInicial, setHorimetroInicial] = useState('')
+  const [horimetroFinal, setHorimetroFinal] = useState('')
+  const [servicosIds, setServicosIds] = useState<string[]>([])
+  const [descricao, setDescricao] = useState('')
+  const [confiancaCampos, setConfiancaCampos] = useState<
+    LeituraFolhaResultado['confiancaCampos'] | null
+  >(null)
+
+  useEffect(() => {
+    async function init() {
+      const [m, o, c, f, s] = await Promise.all([
+        getMaquinas(),
+        getObras(),
+        getClientes(),
+        getFuncionarios(),
+        getTiposServico(),
+      ])
+      setMaquinas(m)
+      setObras(o)
+      setClientes(c)
+      setFuncionarios(f)
+      setTiposServico(s)
+    }
+    init()
+  }, [])
+
+  const handleSimularCaptura = async () => {
+    setEtapa('processando')
+    setLoading(true)
+
+    try {
+      // Simulate OCR vision processing
+      const resultado = await processarFotoFolhaIA(fotoUrl, {
+        funcionarios,
+        maquinas,
+        clientes,
+        obras,
+        tiposServico,
+      })
+
+      setData(resultado.dados.data)
+      setFuncionarioId(resultado.dados.funcionarioId || (funcionarios[0]?.id ?? ''))
+      setMaquinaId(resultado.dados.maquinaId || (maquinas[0]?.id ?? ''))
+      setObraId(resultado.dados.obraId || (obras[0]?.id ?? ''))
+      setHorimetroInicial(resultado.dados.horimetroInicial.toString())
+      setHorimetroFinal(resultado.dados.horimetroFinal.toString())
+      setServicosIds(resultado.dados.servicosIds)
+      setDescricao(resultado.dados.descricao)
+      setConfiancaCampos(resultado.confiancaCampos)
+
+      toast.success('Folha lida com sucesso! Confira os dados abaixo.')
+      setEtapa('conferencia')
+    } catch {
+      toast.error('Não foi possível ler todos os campos. O apontamento irá como rascunho de foto.')
+      setEtapa('conferencia')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSalvarConferencia = async (comoRascunho: boolean = false) => {
+    setLoading(true)
+    try {
+      const obraSel = obras.find((o) => o.id === obraId)
+      const hIni = parseFloat(horimetroInicial) || 0
+      const hFim = parseFloat(horimetroFinal) || 0
+      const horas = hFim > hIni ? hFim - hIni : 0
+
+      const res = await saveApontamento(
+        {
+          data,
+          funcionario_id: funcionarioId || (funcionarios[0]?.id ?? ''),
+          maquina_id: maquinaId || (maquinas[0]?.id ?? ''),
+          cliente_id: obraSel?.cliente_id || (clientes[0]?.id ?? ''),
+          obra_id: obraId || (obras[0]?.id ?? ''),
+          horimetro_inicial: hIni,
+          horimetro_final: hFim,
+          horas_trabalhadas: Number(horas.toFixed(1)),
+          descricao,
+          status: comoRascunho ? 'rascunho_foto' : 'pendente',
+          origem_foto: true,
+          foto_folha_url: fotoUrl,
+        },
+        servicosIds,
+        [fotoUrl],
+      )
+
+      if (comoRascunho) {
+        toast.info('Salvo como Rascunho de Foto na fila de digitação do admin.')
+      } else {
+        toast.success('Apontamento de folha conferido e enviado para aprovação!')
+      }
+      onSuccess()
+    } catch (e: any) {
+      toast.error('Erro ao salvar: ' + (e.message || 'Tente novamente'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4 pb-16 max-w-lg mx-auto">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={onBack} className="h-10 w-10 shrink-0">
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <div>
+          <h2 className="text-xl font-black text-foreground tracking-tight">
+            ENVIO POR FOTO DA FOLHA
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Digitalização com tela de conferência inteligente
+          </p>
+        </div>
+      </div>
+
+      {etapa === 'captura' && (
+        <Card className="border-2 shadow-sm">
+          <CardHeader className="p-4 pb-2 border-b bg-muted/40">
+            <CardTitle className="text-sm font-bold flex items-center gap-2">
+              <Camera className="w-4 h-4 text-amber-500" />
+              Fotografar Folha de Papel do Dia
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 space-y-4 text-center">
+            <div className="border-2 border-dashed border-muted-foreground/30 rounded-2xl p-6 bg-muted/20 flex flex-col items-center justify-center gap-3">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/20 flex items-center justify-center">
+                <FileText className="w-8 h-8 text-amber-600" />
+              </div>
+              <div className="text-sm font-bold">Aponte a câmera para a folha preenchida</div>
+              <p className="text-xs text-muted-foreground max-w-xs">
+                Certifique-se de que a data, operador, horímetro inicial/final e nome da obra
+                estejam visíveis e legíveis.
+              </p>
+              <div className="w-full max-w-xs mt-2 rounded-xl overflow-hidden border">
+                <img
+                  src={fotoUrl}
+                  alt="Amostra de ficha em papel"
+                  className="w-full h-44 object-cover"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <Button
+                onClick={handleSimularCaptura}
+                className="w-full h-16 text-base font-black bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl gap-2 shadow-lg"
+              >
+                <Camera className="w-5 h-5" />
+                TIRAR FOTO E LER COM IA
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setFotoUrl(
+                    'https://img.usecurling.com/p/800/1000?q=handwritten%20report&color=yellow',
+                  )
+                  toast.success('Foto da galeria selecionada!')
+                }}
+                className="w-full h-12 text-xs font-bold"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Escolher outra foto da galeria
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {etapa === 'processando' && (
+        <Card className="border-2 p-8 text-center space-y-4">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-500/20 flex items-center justify-center animate-spin">
+            <RefreshCw className="w-8 h-8 text-amber-600" />
+          </div>
+          <h3 className="text-lg font-black">Processando imagem da folha...</h3>
+          <p className="text-xs text-muted-foreground">
+            Identificando texto manuscrito, casando nomes com cadastros de obras e máquinas...
+          </p>
+        </Card>
+      )}
+
+      {etapa === 'conferencia' && (
+        <div className="space-y-4">
+          {/* Top highlight warning */}
+          <div className="p-3 bg-amber-500/20 border border-amber-500 rounded-xl text-xs text-amber-950 dark:text-amber-200 flex items-start gap-2.5">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold">Tela de Conferência do Apontamento</p>
+              <p className="mt-0.5 opacity-90">
+                Os campos foram pré-preenchidos. Campos marcados em{' '}
+                <span className="font-bold underline">amarelo</span> tiveram baixa confiança ou
+                precisam de conferência visual. A foto original está anexada.
+              </p>
+            </div>
+          </div>
+
+          {/* Side-by-side or stacked photo thumbnail */}
+          <div className="border rounded-xl p-3 bg-card flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <img src={fotoUrl} alt="Folha" className="w-14 h-14 rounded-lg object-cover border" />
+              <div>
+                <span className="text-xs font-bold text-foreground">Foto Original Anexada</span>
+                <p className="text-[11px] text-muted-foreground">
+                  Ficha de campo arquivada no apontamento
+                </p>
+              </div>
+            </div>
+            <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">
+              85% confiança
+            </Badge>
+          </div>
+
+          {/* Form fields with confidence highlights */}
+          <Card className="border-2">
+            <CardContent className="p-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div
+                  className={
+                    confiancaCampos?.data === 'baixa'
+                      ? 'p-1.5 bg-yellow-200/40 dark:bg-yellow-900/30 rounded-lg border border-yellow-500'
+                      : ''
+                  }
+                >
+                  <Label className="text-xs font-bold">Data Extraída</Label>
+                  <Input
+                    type="date"
+                    value={data}
+                    onChange={(e) => setData(e.target.value)}
+                    className="h-11 text-xs mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs font-bold">Operador</Label>
+                  <select
+                    value={funcionarioId}
+                    onChange={(e) => setFuncionarioId(e.target.value)}
+                    className="w-full h-11 text-xs rounded-md border border-input bg-background px-2.5 mt-1"
+                  >
+                    {funcionarios.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs font-bold">Máquina Utilizada</Label>
+                <select
+                  value={maquinaId}
+                  onChange={(e) => setMaquinaId(e.target.value)}
+                  className="w-full h-11 text-xs rounded-md border border-input bg-background px-2.5 mt-1"
+                >
+                  {maquinas.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.tipo} - {m.modelo} ({m.placa_identificacao})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Obra matching highlight */}
+              <div
+                className={
+                  confiancaCampos?.clienteObra === 'media'
+                    ? 'p-2 bg-yellow-200/40 dark:bg-yellow-900/30 rounded-lg border border-yellow-500'
+                    : ''
+                }
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <Label className="text-xs font-bold">Local / Obra (Casamento Aproximado)</Label>
+                  <span className="text-[10px] text-amber-700 dark:text-amber-300 font-semibold">
+                    Conferir
+                  </span>
+                </div>
+                <select
+                  value={obraId}
+                  onChange={(e) => setObraId(e.target.value)}
+                  className="w-full h-11 text-xs rounded-md border border-input bg-background px-2.5"
+                >
+                  {obras.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.nome} (Cliente: {o.cliente?.nome || 'Cliente'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-bold">Horímetro Inicial</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={horimetroInicial}
+                    onChange={(e) => setHorimetroInicial(e.target.value)}
+                    className="h-11 font-mono text-sm mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-bold">Horímetro Final</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={horimetroFinal}
+                    onChange={(e) => setHorimetroFinal(e.target.value)}
+                    className="h-11 font-mono text-sm mt-1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs font-bold">Descrição Extraída</Label>
+                <Textarea
+                  value={descricao}
+                  onChange={(e) => setDescricao(e.target.value)}
+                  rows={2}
+                  className="mt-1 text-xs"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Action buttons */}
+          <div className="space-y-2">
+            <Button
+              onClick={() => handleSalvarConferencia(false)}
+              disabled={loading}
+              className="w-full h-16 text-base font-black bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl gap-2 shadow-lg"
+            >
+              <CheckCircle2 className="w-5 h-5" />
+              CONFIRMAR E SALVAR APONTAMENTO
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => handleSalvarConferencia(true)}
+              disabled={loading}
+              className="w-full h-12 text-xs font-bold border-dashed"
+            >
+              Não consegui conferir tudo: Salvar como "Rascunho de Foto"
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
