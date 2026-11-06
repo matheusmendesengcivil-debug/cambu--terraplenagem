@@ -354,7 +354,9 @@ export default function Index() {
         {/* ADMIN VIEWS */}
         {isAdmin && (
           <>
-            {activeTab === 'dashboard' && <AdminDashboard />}
+            {activeTab === 'dashboard' && (
+              <AdminDashboard onNavigate={(tab) => setActiveTab(tab)} />
+            )}
             {activeTab === 'lancamentos' && (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2 max-w-lg mx-auto">
