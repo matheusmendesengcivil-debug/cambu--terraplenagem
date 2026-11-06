@@ -61,9 +61,13 @@ export const uploadArquivo = async (
 export const isPdfUrl = (url?: string | null): boolean =>
   !!url && url.toLowerCase().split('?')[0].endsWith('.pdf')
 
-// LIMPAR TODOS OS DADOS (somente admin)
-export const limparTodosDados = async (): Promise<{ error: any }> => {
-  const { error } = await supabase.rpc('limpar_todos_dados')
+// EXCLUIR UM ITEM DE CADASTRO (somente admin)
+// Lançamentos ligados ao item são mantidos, só ficam com o campo em branco.
+export const excluirCadastro = async (
+  tabela: 'clientes' | 'obras' | 'maquinas' | 'funcionarios' | 'tipos_servico',
+  id: string,
+): Promise<{ error: any }> => {
+  const { error } = await supabase.from(tabela).delete().eq('id', id)
   return { error }
 }
 

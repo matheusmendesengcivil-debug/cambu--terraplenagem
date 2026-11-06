@@ -166,7 +166,7 @@ export const ManutencaoView: React.FC<ManutencaoViewProps> = ({ onBack, onSucces
                   atrasada
                     ? 'border-red-500 bg-red-500/10'
                     : proxima
-                      ? 'border-amber-500 bg-amber-500/10'
+                      ? 'border-pepsi-600 bg-prata-300/25'
                       : 'border-border bg-card'
                 }`}
               >
@@ -183,7 +183,7 @@ export const ManutencaoView: React.FC<ManutencaoViewProps> = ({ onBack, onSucces
                       Atrasada {Math.abs(horasRestantes).toFixed(1)}h!
                     </Badge>
                   ) : proxima ? (
-                    <Badge className="bg-amber-500 text-amber-950 font-bold gap-1">
+                    <Badge className="bg-pepsi-600 text-white font-bold gap-1">
                       <Clock className="w-3 h-3" />
                       Troca em {horasRestantes.toFixed(1)}h
                     </Badge>
@@ -238,8 +238,8 @@ export const ManutencaoView: React.FC<ManutencaoViewProps> = ({ onBack, onSucces
       {aba === 'lancar' && (
         <form onSubmit={handleSubmit} className="space-y-4">
           <Card className="border-2 shadow-sm">
-            <CardHeader className="p-3.5 pb-2 border-b bg-amber-500/10">
-              <CardTitle className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200">
+            <CardHeader className="p-3.5 pb-2 border-b bg-prata-300/25">
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-pepsi-900 dark:text-pepsi-200">
                 Dados da Manutenção
               </CardTitle>
             </CardHeader>
@@ -347,7 +347,7 @@ export const ManutencaoView: React.FC<ManutencaoViewProps> = ({ onBack, onSucces
           <Button
             type="submit"
             disabled={salvando}
-            className="w-full h-16 text-lg font-black bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-2xl gap-2 shadow-lg uppercase"
+            className="w-full h-16 text-lg font-black bg-pepsi-600 hover:bg-pepsi-700 text-white rounded-2xl gap-2 shadow-lg uppercase"
           >
             <CheckCircle2 className="w-6 h-6" />
             Salvar Registro
@@ -376,7 +376,7 @@ export const ManutencaoView: React.FC<ManutencaoViewProps> = ({ onBack, onSucces
                 </div>
                 <p className="text-xs text-muted-foreground">{m.descricao}</p>
                 {isAdmin && m.custo > 0 && (
-                  <div className="text-xs font-bold text-amber-600 pt-1">
+                  <div className="text-xs font-bold text-pepsi-600 dark:text-pepsi-300 pt-1">
                     Custo: {formatCurrency(m.custo)}
                   </div>
                 )}

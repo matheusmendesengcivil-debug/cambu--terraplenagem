@@ -170,7 +170,7 @@ export const AprovacoesView: React.FC = () => {
           {filtrados.map((ap) => (
             <Card
               key={ap.id}
-              className="border-2 hover:border-amber-500/40 transition-colors shadow-sm"
+              className="border-2 hover:border-prata-400/70 transition-colors shadow-sm"
             >
               <CardContent className="p-4 space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -194,7 +194,7 @@ export const AprovacoesView: React.FC = () => {
                     ) : (
                       <Badge
                         variant="outline"
-                        className="border-amber-500 text-amber-600 text-[10px]"
+                        className="border-pepsi-600 text-pepsi-600 dark:text-pepsi-300 text-[10px]"
                       >
                         Pendente
                       </Badge>
@@ -207,7 +207,7 @@ export const AprovacoesView: React.FC = () => {
                   </div>
 
                   <div className="text-right">
-                    <span className="text-lg font-black text-amber-600">
+                    <span className="text-lg font-black text-pepsi-600 dark:text-pepsi-300">
                       {formatHoursShort(ap.horas_trabalhadas)}
                     </span>
                     <span className="text-xs font-semibold text-muted-foreground ml-2">
@@ -243,7 +243,7 @@ export const AprovacoesView: React.FC = () => {
                     <span className="font-bold text-foreground">{ap.horimetro_inicial}h</span> →{' '}
                     <span className="font-bold text-foreground">{ap.horimetro_final}h</span>
                     {ap.horas_paradas ? (
-                      <span className="text-amber-600 ml-2">
+                      <span className="text-pepsi-600 dark:text-pepsi-300 ml-2">
                         ({ap.horas_paradas}h paradas: {ap.motivo_parada})
                       </span>
                     ) : null}
@@ -421,7 +421,7 @@ export const AprovacoesView: React.FC = () => {
               </div>
               <div>
                 <span className="text-muted-foreground">Horas & Valor Previsto:</span>
-                <p className="font-bold font-mono text-amber-600 text-sm">
+                <p className="font-bold font-mono text-pepsi-600 dark:text-pepsi-300 text-sm">
                   {formatHoursShort(detalhesApontamento.horas_trabalhadas)} (
                   {formatCurrency(detalhesApontamento.valor_total)})
                 </p>

@@ -275,7 +275,7 @@ export const FechamentoView: React.FC = () => {
                             ) : (
                               <Badge
                                 variant="outline"
-                                className="border-amber-500 text-amber-600 text-[10px]"
+                                className="border-pepsi-600 text-pepsi-600 dark:text-pepsi-300 text-[10px]"
                               >
                                 EM ABERTO
                               </Badge>
@@ -320,7 +320,7 @@ export const FechamentoView: React.FC = () => {
                             <span className="text-muted-foreground font-semibold">
                               Saldo Devedor:
                             </span>
-                            <span className="font-bold text-amber-600">
+                            <span className="font-bold text-pepsi-600 dark:text-pepsi-300">
                               {formatCurrency(emAberto)}
                             </span>
                           </div>
@@ -447,7 +447,7 @@ export const FechamentoView: React.FC = () => {
                     type="date"
                     value={vencimento}
                     onChange={(e) => setVencimento(e.target.value)}
-                    className="h-10 text-xs font-bold text-amber-600 mt-1"
+                    className="h-10 text-xs font-bold text-pepsi-600 dark:text-pepsi-300 mt-1"
                   />
                 </div>
               </div>
@@ -504,7 +504,7 @@ export const FechamentoView: React.FC = () => {
                           key={ap.id}
                           onClick={() => toggleApontamento(ap.id)}
                           className={`cursor-pointer transition-colors ${
-                            isSel ? 'bg-amber-500/10 font-semibold' : 'hover:bg-muted/40'
+                            isSel ? 'bg-prata-300/25 font-semibold' : 'hover:bg-muted/40'
                           }`}
                         >
                           <td className="p-3 text-center">
@@ -522,7 +522,7 @@ export const FechamentoView: React.FC = () => {
                           <td className="p-3 text-right font-mono">
                             {formatCurrency(ap.valor_hora_aplicado)}
                           </td>
-                          <td className="p-3 text-right font-mono font-bold text-amber-600">
+                          <td className="p-3 text-right font-mono font-bold text-pepsi-600 dark:text-pepsi-300">
                             {formatCurrency(ap.valor_total)}
                           </td>
                         </tr>
@@ -536,7 +536,7 @@ export const FechamentoView: React.FC = () => {
 
           {/* Footer Totalizer & Emit Button */}
           {selecionadosIds.length > 0 && (
-            <div className="bg-amber-500/15 border-2 border-amber-500 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="bg-prata-300/35 border-2 border-pepsi-600 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <span className="text-xs font-bold text-muted-foreground uppercase">
                   Resumo da Medição
@@ -552,7 +552,7 @@ export const FechamentoView: React.FC = () => {
               <Button
                 onClick={handleGerarMedicao}
                 disabled={gerando}
-                className="h-14 px-6 text-base font-black bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl gap-2 shadow-lg"
+                className="h-14 px-6 text-base font-black bg-pepsi-600 hover:bg-pepsi-700 text-white rounded-xl gap-2 shadow-lg"
               >
                 <CheckCircle2 className="w-5 h-5" />
                 GERAR MEDIÇÃO & COBRANÇA
@@ -659,9 +659,9 @@ export const FechamentoView: React.FC = () => {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white text-zinc-900 rounded-2xl p-6 max-w-2xl w-full space-y-4 shadow-2xl my-auto print:p-0 print:shadow-none">
             {/* Header with logo & company */}
-            <div className="border-b-2 border-amber-500 pb-4 flex items-center justify-between">
+            <div className="border-b-2 border-pepsi-600 pb-4 flex items-center justify-between">
               <div>
-                <h1 className="text-xl font-black tracking-tight text-amber-600">
+                <h1 className="text-xl font-black tracking-tight text-pepsi-600 dark:text-pepsi-300">
                   CAMBUÍ TERRAPLENAGEM
                 </h1>
                 <p className="text-xs text-zinc-600 font-semibold">
@@ -702,7 +702,7 @@ export const FechamentoView: React.FC = () => {
                 </div>
                 <div>
                   <strong>Vencimento:</strong>{' '}
-                  <span className="font-bold text-amber-700">
+                  <span className="font-bold text-pepsi-700">
                     {formatDateBR(cobrancaRelatorio.data_vencimento)}
                   </span>
                 </div>
@@ -710,10 +710,10 @@ export const FechamentoView: React.FC = () => {
             </div>
 
             {/* Total summary */}
-            <div className="border rounded-xl p-4 bg-amber-50 border-amber-200 flex items-center justify-between">
+            <div className="border rounded-xl p-4 bg-prata-100 border-prata-300 flex items-center justify-between">
               <div>
-                <span className="text-xs uppercase font-bold text-amber-900">Total Faturado</span>
-                <div className="text-2xl font-black text-amber-700 font-mono">
+                <span className="text-xs uppercase font-bold text-pepsi-900">Total Faturado</span>
+                <div className="text-2xl font-black text-pepsi-700 font-mono">
                   {formatCurrency(cobrancaRelatorio.valor_total)}
                 </div>
               </div>
