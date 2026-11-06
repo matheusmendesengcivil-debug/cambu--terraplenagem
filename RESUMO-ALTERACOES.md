@@ -2,7 +2,7 @@
 
 _Atualizado em 05/11/2026_
 
-## Rodada 1 (já publicada no GitHub)
+## Rodada 1
 
 | #   | Pedido                 | Como ficou                                                                                                                                                                                                                       |
 | --- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -32,8 +32,38 @@ _Atualizado em 05/11/2026_
 - A cor do app no celular (barra do navegador / ícone instalado) também passou para azul.
 - Se quiser testar outra combinação, basta pedir: as cores ficam centralizadas e é rápido trocar.
 
+### Correção (rodada 2b)
+
+- A sincronização do Skip tinha desfeito a exclusão por item. Isso foi **restaurado**.
+- O prata ficou **mais claro e levemente azulado**, para combinar com o azul Pepsi.
+
+## Rodada 3 — Dashboard todo clicável
+
+Tudo no Dashboard abre uma janela com a lista do que forma aquele número. Embaixo dela há um botão que leva à tela certa do sistema.
+
+| O que você toca | O que aparece | Botão leva para |
+| --- | --- | --- |
+| **Horas Trabalhadas** | Lançamentos do período (data, colaborador, máquina, cliente, horas) | Lançamentos |
+| **Valor Produzido** | Lançamentos aprovados, com valor de cada um | Lançamentos |
+| **Total a Receber** | Cobranças em aberto ou parciais, com valor em aberto | Fechamento |
+| **Total Atrasado** | Cobranças vencidas sem pagamento | Fechamento |
+| **Total Recebido** | Cobranças com pagamento e valor recebido | Fechamento |
+| **Gasto com Combustível** | Abastecimentos (data, máquina, colaborador, local, litros) | Abastecimento |
+| **Gasto com Manutenção** | Manutenções (máquina, tipo, oficina, custo) | Manutenção |
+| **Pendentes de Aprovação** | Lançamentos aguardando aprovação | Aprovações |
+| **Barra do gráfico por funcionário** | Lançamentos daquele colaborador | Lançamentos |
+| **Barra do gráfico por cliente** | Lançamentos daquele cliente | Lançamentos |
+| **Linha da tabela de máquinas** | Lançamentos e abastecimentos daquela máquina | Lançamentos |
+| **Linha da tabela de clientes (cobrança)** | Dados da cobrança e pagamentos recebidos | Fechamento |
+| **Alerta de troca de óleo** | Horímetro atual, última troca e histórico de manutenção | Manutenção |
+| **Alerta "não lançou ontem"** | Últimos lançamentos do colaborador | Lançamentos |
+
+- Cada card mostra **"Ver detalhes ›"** e se destaca ao passar o dedo/mouse.
+- As listas respeitam o filtro de período escolhido (Hoje, 7 dias, Mês, Tudo).
+
 ## Como ver no site
 
 1. Fazer o **merge** do pull request no GitHub.
+   - **Não altere nada no Skip antes de sincronizar**, senão ele pode sobrescrever as mudanças.
 2. No **Skip**, sincronizar com o GitHub e clicar em **Publicar**.
 3. Abrir o endereço do sistema e atualizar a página.

@@ -48,8 +48,39 @@ import {
   CartesianGrid,
 } from 'recharts'
 import { toast } from 'sonner'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import { ChevronRight } from 'lucide-react'
 
-export const AdminDashboard: React.FC = () => {
+type Detalhe = {
+  titulo: string
+  resumo?: string
+  colunas: string[]
+  direita?: number[]
+  linhas: React.ReactNode[][]
+  tela?: { label: string; tab: string }
+}
+
+interface AdminDashboardProps {
+  onNavigate?: (tab: string) => void
+}
+
+const clicavel =
+  'cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-pepsi-600'
+
+const VerDetalhes = () => (
+  <span className="mt-1.5 inline-flex items-center text-[10px] font-bold text-pepsi-600 dark:text-pepsi-300">
+    Ver detalhes <ChevronRight className="w-3 h-3" />
+  </span>
+)
+
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) => {
+  const [detalhe, setDetalhe] = useState<Detalhe | null>(null)
   const [periodoFiltro, setPeriodoFiltro] = useState<'hoje' | 'semana' | 'mes' | 'tudo'>('semana')
   const [loading, setLoading] = useState(true)
 
@@ -138,6 +169,7 @@ export const AdminDashboard: React.FC = () => {
       .filter((a) => a.funcionario_id === f.id)
       .reduce((acc, a) => acc + Number(a.horas_trabalhadas || 0), 0)
     return {
+      id: f.id,
       nome: (f.nome || 'Sem nome').split(' ')[0],
       horas: Number(total.toFixed(1)),
     }
@@ -149,6 +181,7 @@ export const AdminDashboard: React.FC = () => {
       .filter((a) => a.cliente_id === c.id)
       .reduce((acc, a) => acc + Number(a.horas_trabalhadas || 0), 0)
     return {
+      id: c.id,
       cliente: (c.nome || 'Sem nome').length > 15 ? (c.nome || '').substring(0, 15) + '...' : c.nome || 'Sem nome',
       horas: Number(total.toFixed(1)),
     }
@@ -167,6 +200,7 @@ export const AdminDashboard: React.FC = () => {
     const consumoMedio = horas > 0 ? (litros / horas).toFixed(1) : '0'
 
     return {
+      id: m.id,
       modelo: m.modelo,
       horas: Number(horas.toFixed(1)),
       litros: Math.round(litros),
@@ -198,6 +232,222 @@ export const AdminDashboard: React.FC = () => {
     const tem = apontamentos.some((a) => a.funcionario_id === f.id && a.data === yesterdayStr)
     return !tem
   })
+
+  // ---------- Detalhes (tudo clicável) ----------
+  const nomePeriodo =
+    periodoFiltro === 'hoje' ? 'hoje' : periodoFiltro === 'semana' ? 'últimos 7 dias' : periodoFiltro === 'mes' ? 'este mês' : 'todo o período'
+
+  const statusAp: Record<string, string> = {
+    pendente: 'Pendente',
+    aprovado: 'Aprovado',
+    devolvido: 'Devolvido',
+    rascunho_foto: 'Rascunho (foto)',
+  }
+  const statusCob: Record<string, string> = {
+    em_aberto: 'Em aberto',
+    pago_parcial: 'Parcial',
+    pago: 'Pago',
+    atrasado: 'Atrasado',
+  }
+
+  const linhasApontamentos = (lista: Apontamento[], comValor = false) =>
+    [...lista]
+      .sort((a, b) => (b.data || '').localeCompare(a.data || ''))
+      .map((a) => [
+        formatDateBR(a.data),
+        a.funcionario?.nome || '—',
+        a.maquina?.modelo || '—',
+        a.cliente?.nome || '—',
+        `${Number(a.horas_trabalhadas || 0).toFixed(1)}h`,
+        comValor ? formatCurrency(Number(a.valor_total || 0)) : statusAp[a.status] || a.status,
+      ])
+
+  const detalheApontamentos = (
+    titulo: string,
+    lista: Apontamento[],
+    comValor = false,
+    tela: Detalhe['tela'] = { label: 'Abrir Lançamentos', tab: 'lancamentos' },
+  ): Detalhe => {
+    const horas = lista.reduce((acc, a) => acc + Number(a.horas_trabalhadas || 0), 0)
+    const valor = lista.reduce((acc, a) => acc + Number(a.valor_total || 0), 0)
+    return {
+      titulo,
+      resumo: `${lista.length} lançamento(s) · ${horas.toFixed(1)}h${comValor ? ' · ' + formatCurrency(valor) : ''} · ${nomePeriodo}`,
+      colunas: ['Data', 'Colaborador', 'Máquina', 'Cliente', 'Horas', comValor ? 'Valor' : 'Situação'],
+      direita: [4, 5],
+      linhas: linhasApontamentos(lista, comValor),
+      tela,
+    }
+  }
+
+  const detalheCobrancas = (titulo: string, lista: Cobranca[], modo: 'aberto' | 'pago'): Detalhe => {
+    const total = lista.reduce(
+      (acc, c) =>
+        acc + (modo === 'pago' ? Number(c.valor_pago || 0) : Number(c.valor_total) - Number(c.valor_pago)),
+      0,
+    )
+    return {
+      titulo,
+      resumo: `${lista.length} cobrança(s) · ${formatCurrency(total)}`,
+      colunas: ['Cobrança', 'Cliente', 'Vencimento', 'Valor total', modo === 'pago' ? 'Recebido' : 'Em aberto', 'Situação'],
+      direita: [3, 4],
+      linhas: lista.map((c) => [
+        c.numero,
+        c.cliente?.nome || '—',
+        formatDateBR(c.data_vencimento),
+        formatCurrency(Number(c.valor_total)),
+        formatCurrency(modo === 'pago' ? Number(c.valor_pago || 0) : Number(c.valor_total) - Number(c.valor_pago)),
+        c.data_vencimento < hojeStr && c.status !== 'pago' ? 'Atrasado' : statusCob[c.status] || c.status,
+      ]),
+      tela: { label: 'Abrir Fechamento', tab: 'fechamento' },
+    }
+  }
+
+  const detalheAbastecimentos = (titulo: string, lista: Abastecimento[]): Detalhe => {
+    const litros = lista.reduce((acc, a) => acc + Number(a.litros || 0), 0)
+    const valor = lista.reduce((acc, a) => acc + Number(a.valor_total || 0), 0)
+    return {
+      titulo,
+      resumo: `${lista.length} abastecimento(s) · ${Math.round(litros)} L${valor ? ' · ' + formatCurrency(valor) : ''}`,
+      colunas: ['Data', 'Máquina/Veículo', 'Colaborador', 'Combustível', 'Local', 'Litros'],
+      direita: [5],
+      linhas: [...lista]
+        .sort((a, b) => (b.data || '').localeCompare(a.data || ''))
+        .map((a) => [
+          formatDateBR(a.data),
+          a.maquina?.modelo || '—',
+          a.funcionario?.nome || '—',
+          a.tipo_combustivel || '—',
+          a.posto_local || '—',
+          `${Number(a.litros || 0)} L`,
+        ]),
+      tela: { label: 'Abrir Abastecimento', tab: 'abastecimento' },
+    }
+  }
+
+  const detalheManutencoes = (titulo: string, lista: Manutencao[]): Detalhe => {
+    const total = lista.reduce((acc, m) => acc + Number(m.custo || 0), 0)
+    return {
+      titulo,
+      resumo: `${lista.length} manutenção(ões) · ${formatCurrency(total)}`,
+      colunas: ['Data', 'Máquina', 'Tipo', 'Descrição', 'Oficina', 'Custo'],
+      direita: [5],
+      linhas: [...lista]
+        .sort((a, b) => (b.data || '').localeCompare(a.data || ''))
+        .map((m) => [
+          formatDateBR(m.data),
+          m.maquina?.modelo || '—',
+          m.tipo || '—',
+          m.descricao || '—',
+          m.oficina_responsavel || '—',
+          formatCurrency(Number(m.custo || 0)),
+        ]),
+      tela: { label: 'Abrir Manutenção', tab: 'manutencao' },
+    }
+  }
+
+  const abrirCard = (qual: string) => {
+    const cobAberto = cobrancas.filter((c) => c.status === 'em_aberto' || c.status === 'pago_parcial')
+    const cobAtrasado = cobrancas.filter(
+      (c) => c.status === 'atrasado' || (c.data_vencimento < hojeStr && c.status !== 'pago'),
+    )
+    const cobRecebido = cobrancas.filter((c) => Number(c.valor_pago || 0) > 0)
+    const mapa: Record<string, () => Detalhe> = {
+      horas: () => detalheApontamentos('Horas trabalhadas', filteredApontamentos),
+      produzido: () => detalheApontamentos('Valor produzido (aprovados)', aprovados, true),
+      receber: () => detalheCobrancas('Total a receber', cobAberto, 'aberto'),
+      atrasado: () => detalheCobrancas('Total atrasado', cobAtrasado, 'aberto'),
+      recebido: () => detalheCobrancas('Total recebido', cobRecebido, 'pago'),
+      combustivel: () => detalheAbastecimentos('Abastecimentos', abastecimentos),
+      manutencao: () => detalheManutencoes('Gasto com manutenção', manutencoes),
+      pendentes: () => ({
+        ...detalheApontamentos('Pendentes de aprovação', pendentesAprovacao),
+        resumo: `${pendentesAprovacao.length} lançamento(s) aguardando aprovação`,
+        tela: { label: 'Abrir Aprovações', tab: 'aprovacoes' },
+      }),
+    }
+    setDetalhe(mapa[qual]())
+  }
+
+  const propsCard = (qual: string) => ({
+    role: 'button' as const,
+    tabIndex: 0,
+    onClick: () => abrirCard(qual),
+    onKeyDown: (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') abrirCard(qual)
+    },
+  })
+
+  const abrirFuncionario = (id?: string) => {
+    const f = funcionarios.find((x) => x.id === id)
+    if (!f) return
+    setDetalhe(
+      detalheApontamentos(
+        `Horas de ${f.nome || 'colaborador'}`,
+        filteredApontamentos.filter((a) => a.funcionario_id === f.id),
+      ),
+    )
+  }
+
+  const abrirCliente = (id?: string) => {
+    const c = clientes.find((x) => x.id === id)
+    if (!c) return
+    setDetalhe(
+      detalheApontamentos(
+        `Horas para ${c.nome || 'cliente'}`,
+        filteredApontamentos.filter((a) => a.cliente_id === c.id),
+      ),
+    )
+  }
+
+  const abrirMaquina = (id?: string) => {
+    const m = maquinas.find((x) => x.id === id)
+    if (!m) return
+    const aps = filteredApontamentos.filter((a) => a.maquina_id === m.id)
+    const abs = abastecimentos.filter((a) => a.maquina_id === m.id)
+    const base = detalheApontamentos(`${m.modelo || 'Máquina'} — horas e diesel`, aps)
+    const litros = abs.reduce((acc, a) => acc + Number(a.litros || 0), 0)
+    setDetalhe({
+      ...base,
+      resumo: `${base.resumo} · ${Math.round(litros)} L abastecidos (${abs.length} abastecimento(s))`,
+      linhas: [
+        ...base.linhas,
+        ...abs.map((a) => [formatDateBR(a.data), a.funcionario?.nome || '—', m.modelo || '—', 'Abastecimento', `${Number(a.litros || 0)} L`, a.posto_local || '—']),
+      ],
+    })
+  }
+
+  const abrirCobranca = (cob: Cobranca) => {
+    const pags = cob.pagamentos || []
+    setDetalhe({
+      titulo: `Cobrança ${cob.numero}`,
+      resumo: `${cob.cliente?.nome || '—'} · período ${formatDateBR(cob.periodo_inicio)} a ${formatDateBR(cob.periodo_fim)} · ${Number(cob.horas_totais || 0).toFixed(1)}h · total ${formatCurrency(Number(cob.valor_total))} · pago ${formatCurrency(Number(cob.valor_pago || 0))} · vence ${formatDateBR(cob.data_vencimento)}`,
+      colunas: ['Data do pagamento', 'Forma', 'Observação', 'Valor'],
+      direita: [3],
+      linhas: pags.map((p) => [formatDateBR(p.data), p.forma_pagamento, p.observacao || '—', formatCurrency(Number(p.valor))]),
+      tela: { label: 'Abrir Fechamento', tab: 'fechamento' },
+    })
+  }
+
+  const abrirAlertaOleo = (m: Maquina) => {
+    setDetalhe({
+      ...detalheManutencoes(
+        `${m.tipo || ''} ${m.modelo || ''} — troca de óleo`,
+        manutencoes.filter((x) => x.maquina_id === m.id),
+      ),
+      resumo: `Horímetro atual ${Number(m.horimetro_atual || 0)}h · última troca em ${Number(m.horimetro_ultima_troca || 0)}h · intervalo ${Number(m.intervalo_troca_oleo || 0)}h`,
+    })
+  }
+
+  const abrirSemLancamento = (f: Funcionario) => {
+    setDetalhe({
+      ...detalheApontamentos(
+        `${f.nome || 'Colaborador'} — últimos lançamentos`,
+        apontamentos.filter((a) => a.funcionario_id === f.id).slice(0, 30),
+      ),
+      resumo: `Não há lançamento em ${formatDateBR(yesterdayStr)}. Abaixo, os últimos registros.`,
+    })
+  }
 
   // Export CSV
   const handleExportCSV = () => {
@@ -273,7 +523,8 @@ export const AdminDashboard: React.FC = () => {
             {alertasOleo.map((al) => (
               <div
                 key={al.maquina.id}
-                className="flex items-center justify-between p-2 rounded-lg bg-card border border-prata-400/60"
+                onClick={() => abrirAlertaOleo(al.maquina)}
+                className="flex items-center justify-between p-2 rounded-lg bg-card border border-prata-400/60 cursor-pointer hover:border-pepsi-600"
               >
                 <span className="font-semibold text-foreground">
                   🔧 {al.maquina.tipo} ({al.maquina.modelo})
@@ -292,7 +543,8 @@ export const AdminDashboard: React.FC = () => {
             {funcionariosSemLancamentoOntem.map((f) => (
               <div
                 key={f.id}
-                className="flex items-center justify-between p-2 rounded-lg bg-card border border-prata-400/60"
+                onClick={() => abrirSemLancamento(f)}
+                className="flex items-center justify-between p-2 rounded-lg bg-card border border-prata-400/60 cursor-pointer hover:border-pepsi-600"
               >
                 <span className="font-semibold text-foreground">⚠️ {f.nome}</span>
                 <span className="text-[11px] text-muted-foreground">
@@ -307,7 +559,7 @@ export const AdminDashboard: React.FC = () => {
       {/* 8 SUMMARY CARDS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Total horas */}
-        <Card className="border-2 border-prata-400/60 bg-gradient-to-br from-prata-300/25 to-transparent">
+        <Card className={`border-2 border-prata-400/60 bg-gradient-to-br from-prata-300/25 to-transparent ${clicavel}`} {...propsCard('horas')}>
           <CardHeader className="p-3.5 pb-1">
             <CardTitle className="text-xs font-bold text-muted-foreground flex items-center justify-between">
               <span>Horas Trabalhadas</span>
@@ -321,11 +573,12 @@ export const AdminDashboard: React.FC = () => {
             <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
               No período selecionado
             </p>
+            <VerDetalhes />
           </CardContent>
         </Card>
 
         {/* Valor produzido */}
-        <Card className="border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-transparent">
+        <Card className={`border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-transparent ${clicavel}`} {...propsCard('produzido')}>
           <CardHeader className="p-3.5 pb-1">
             <CardTitle className="text-xs font-bold text-muted-foreground flex items-center justify-between">
               <span>Valor Produzido (Faturável)</span>
@@ -337,11 +590,12 @@ export const AdminDashboard: React.FC = () => {
               {formatCurrency(valorProduzido)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">Apontamentos aprovados</p>
+            <VerDetalhes />
           </CardContent>
         </Card>
 
         {/* A receber / Em aberto */}
-        <Card className="border-2 border-blue-500/30 bg-card">
+        <Card className={`border-2 border-blue-500/30 bg-card ${clicavel}`} {...propsCard('receber')}>
           <CardHeader className="p-3.5 pb-1">
             <CardTitle className="text-xs font-bold text-muted-foreground flex items-center justify-between">
               <span>Total a Receber</span>
@@ -353,11 +607,12 @@ export const AdminDashboard: React.FC = () => {
               {formatCurrency(totalAReceber)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">Medições em aberto</p>
+            <VerDetalhes />
           </CardContent>
         </Card>
 
         {/* Atrasado */}
-        <Card className="border-2 border-red-500/30 bg-card">
+        <Card className={`border-2 border-red-500/30 bg-card ${clicavel}`} {...propsCard('atrasado')}>
           <CardHeader className="p-3.5 pb-1">
             <CardTitle className="text-xs font-bold text-muted-foreground flex items-center justify-between">
               <span>Total Atrasado</span>
@@ -369,11 +624,12 @@ export const AdminDashboard: React.FC = () => {
               {formatCurrency(totalAtrasado)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">Vencidas sem pagamento</p>
+            <VerDetalhes />
           </CardContent>
         </Card>
 
         {/* Total Recebido */}
-        <Card className="border-2 border-border bg-card">
+        <Card className={`border-2 border-border bg-card ${clicavel}`} {...propsCard('recebido')}>
           <CardHeader className="p-3.5 pb-1">
             <CardTitle className="text-xs font-bold text-muted-foreground flex items-center justify-between">
               <span>Total Recebido</span>
@@ -385,11 +641,12 @@ export const AdminDashboard: React.FC = () => {
               {formatCurrency(totalRecebido)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">Pagamentos confirmados</p>
+            <VerDetalhes />
           </CardContent>
         </Card>
 
         {/* Gasto combustível */}
-        <Card className="border-2 border-border bg-card">
+        <Card className={`border-2 border-border bg-card ${clicavel}`} {...propsCard('combustivel')}>
           <CardHeader className="p-3.5 pb-1">
             <CardTitle className="text-xs font-bold text-muted-foreground flex items-center justify-between">
               <span>Gasto com Combustível</span>
@@ -401,11 +658,12 @@ export const AdminDashboard: React.FC = () => {
               {formatCurrency(gastoCombustivel)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">Diesel e insumos</p>
+            <VerDetalhes />
           </CardContent>
         </Card>
 
         {/* Gasto manutenção */}
-        <Card className="border-2 border-border bg-card">
+        <Card className={`border-2 border-border bg-card ${clicavel}`} {...propsCard('manutencao')}>
           <CardHeader className="p-3.5 pb-1">
             <CardTitle className="text-xs font-bold text-muted-foreground flex items-center justify-between">
               <span>Gasto com Manutenção</span>
@@ -417,11 +675,12 @@ export const AdminDashboard: React.FC = () => {
               {formatCurrency(gastoManutencao)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">Peças e oficinas</p>
+            <VerDetalhes />
           </CardContent>
         </Card>
 
         {/* Apontamentos pendentes */}
-        <Card className="border-2 border-pepsi-600 bg-prata-300/25">
+        <Card className={`border-2 border-pepsi-600 bg-prata-300/25 ${clicavel}`} {...propsCard('pendentes')}>
           <CardHeader className="p-3.5 pb-1">
             <CardTitle className="text-xs font-bold text-pepsi-950 dark:text-pepsi-200 flex items-center justify-between">
               <span>Pendentes de Aprovação</span>
@@ -435,6 +694,7 @@ export const AdminDashboard: React.FC = () => {
             <p className="text-[11px] text-pepsi-950/80 dark:text-pepsi-300 mt-0.5 font-bold">
               Aguardando escritório
             </p>
+            <VerDetalhes />
           </CardContent>
         </Card>
       </div>
@@ -445,6 +705,7 @@ export const AdminDashboard: React.FC = () => {
         <Card className="border-2">
           <CardHeader className="p-4 pb-2 border-b">
             <CardTitle className="text-sm font-bold">Horas Trabalhadas por Funcionário</CardTitle>
+            <p className="text-[10px] text-muted-foreground">Toque numa barra para ver os lançamentos</p>
           </CardHeader>
           <CardContent className="p-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -453,7 +714,13 @@ export const AdminDashboard: React.FC = () => {
                 <XAxis dataKey="nome" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} unit="h" />
                 <Tooltip />
-                <Bar dataKey="horas" fill="#004b93" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="horas"
+                  fill="#004b93"
+                  radius={[4, 4, 0, 0]}
+                  className="cursor-pointer"
+                  onClick={(d: any) => abrirFuncionario(d?.payload?.id ?? d?.id)}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -463,6 +730,7 @@ export const AdminDashboard: React.FC = () => {
         <Card className="border-2">
           <CardHeader className="p-4 pb-2 border-b">
             <CardTitle className="text-sm font-bold">Horas Trabalhadas por Cliente</CardTitle>
+            <p className="text-[10px] text-muted-foreground">Toque numa barra para ver os lançamentos</p>
           </CardHeader>
           <CardContent className="p-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -471,7 +739,13 @@ export const AdminDashboard: React.FC = () => {
                 <XAxis dataKey="cliente" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 11 }} unit="h" />
                 <Tooltip />
-                <Bar dataKey="horas" fill="#a7afb7" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="horas"
+                  fill="#8fa3bd"
+                  radius={[4, 4, 0, 0]}
+                  className="cursor-pointer"
+                  onClick={(d: any) => abrirCliente(d?.payload?.id ?? d?.id)}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -498,7 +772,11 @@ export const AdminDashboard: React.FC = () => {
             </thead>
             <tbody className="divide-y">
               {horasEConsumoPorMaquina.map((m, idx) => (
-                <tr key={idx} className="hover:bg-muted/40">
+                <tr
+                  key={idx}
+                  className="hover:bg-muted/40 cursor-pointer"
+                  onClick={() => abrirMaquina(m.id)}
+                >
                   <td className="p-3 font-bold text-foreground">{m.modelo}</td>
                   <td className="p-3 text-right font-mono font-bold text-pepsi-600 dark:text-pepsi-300">{m.horas}h</td>
                   <td className="p-3 text-right font-mono">{m.litros} L</td>
@@ -535,7 +813,11 @@ export const AdminDashboard: React.FC = () => {
                 const vencida = cob.data_vencimento < hojeStr && cob.status !== 'pago'
 
                 return (
-                  <tr key={cob.id} className="hover:bg-muted/40">
+                  <tr
+                    key={cob.id}
+                    className="hover:bg-muted/40 cursor-pointer"
+                    onClick={() => abrirCobranca(cob)}
+                  >
                     <td className="p-3 font-mono font-bold">{cob.numero}</td>
                     <td className="p-3 font-semibold text-foreground">{cob.cliente?.nome}</td>
                     <td className="p-3 text-muted-foreground">
@@ -570,6 +852,67 @@ export const AdminDashboard: React.FC = () => {
           </table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!detalhe} onOpenChange={(o) => !o && setDetalhe(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-pepsi-600 dark:text-pepsi-300 font-black">
+              {detalhe?.titulo}
+            </DialogTitle>
+            {detalhe?.resumo && (
+              <DialogDescription className="text-xs">{detalhe.resumo}</DialogDescription>
+            )}
+          </DialogHeader>
+          <div className="overflow-auto flex-1 -mx-2 px-2">
+            {detalhe && detalhe.linhas.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                Nenhum registro encontrado.
+              </p>
+            ) : (
+              <table className="w-full text-xs">
+                <thead className="bg-muted text-muted-foreground uppercase text-[10px] sticky top-0">
+                  <tr>
+                    {detalhe?.colunas.map((c, i) => (
+                      <th
+                        key={i}
+                        className={`p-2 ${detalhe.direita?.includes(i) ? 'text-right' : 'text-left'}`}
+                      >
+                        {c}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {detalhe?.linhas.map((l, li) => (
+                    <tr key={li} className="hover:bg-muted/40">
+                      {l.map((v, ci) => (
+                        <td
+                          key={ci}
+                          className={`p-2 ${detalhe.direita?.includes(ci) ? 'text-right font-mono' : ''}`}
+                        >
+                          {v}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+          {detalhe?.tela && onNavigate && (
+            <Button
+              className="w-full mt-2 font-bold"
+              onClick={() => {
+                const tab = detalhe.tela!.tab
+                setDetalhe(null)
+                onNavigate(tab)
+              }}
+            >
+              {detalhe.tela.label} <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
