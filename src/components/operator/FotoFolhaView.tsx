@@ -176,9 +176,7 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h2 className="text-xl font-black text-foreground tracking-tight">
-            ENVIAR FOTO OU PDF
-          </h2>
+          <h2 className="text-xl font-black text-foreground tracking-tight">ENVIAR FOTO OU PDF</h2>
           <p className="text-xs text-muted-foreground">
             Digitalização com tela de conferência inteligente
           </p>
@@ -346,7 +344,9 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs font-bold">
-                    {isVeiculo(maquinas.find((m) => m.id === maquinaId)) ? 'Km Inicial' : 'Horímetro Inicial'}
+                    {isVeiculo(maquinas.find((m) => m.id === maquinaId))
+                      ? 'Km Inicial'
+                      : 'Horímetro Inicial'}
                   </Label>
                   <Input
                     type="number"
@@ -358,7 +358,9 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
                 </div>
                 <div>
                   <Label className="text-xs font-bold">
-                    {isVeiculo(maquinas.find((m) => m.id === maquinaId)) ? 'Km Final' : 'Horímetro Final'}
+                    {isVeiculo(maquinas.find((m) => m.id === maquinaId))
+                      ? 'Km Final'
+                      : 'Horímetro Final'}
                   </Label>
                   <Input
                     type="number"

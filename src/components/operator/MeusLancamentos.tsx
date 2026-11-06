@@ -73,8 +73,7 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({
   }
 
   // Operador só edita o que ainda não foi aprovado; admin edita tudo
-  const podeEditar = (ap: Apontamento) =>
-    !ap.is_offline && (isAdmin || ap.status !== 'aprovado')
+  const podeEditar = (ap: Apontamento) => !ap.is_offline && (isAdmin || ap.status !== 'aprovado')
 
   const filtrados = apontamentos.filter((a) => {
     if (filtroStatus !== 'todos' && a.status !== filtroStatus) return false
@@ -85,7 +84,9 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({
       const obr = (a.obra?.nome || '').toLowerCase()
       const cli = (a.cliente?.nome || '').toLowerCase()
       const desc = (a.descricao || '').toLowerCase()
-      return maq.includes(q) || op.includes(q) || obr.includes(q) || cli.includes(q) || desc.includes(q)
+      return (
+        maq.includes(q) || op.includes(q) || obr.includes(q) || cli.includes(q) || desc.includes(q)
+      )
     }
     return true
   })
@@ -102,7 +103,9 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({
               {isAdmin ? 'LANÇAMENTOS' : 'MEUS LANÇAMENTOS'}
             </h2>
             <p className="text-xs text-muted-foreground">
-              {isAdmin ? 'Todos os apontamentos — toque em Editar para alterar' : 'Histórico de apontamentos de campo'}
+              {isAdmin
+                ? 'Todos os apontamentos — toque em Editar para alterar'
+                : 'Histórico de apontamentos de campo'}
             </p>
           </div>
         </div>

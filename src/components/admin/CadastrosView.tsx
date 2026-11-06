@@ -349,7 +349,9 @@ export const CadastrosView: React.FC = () => {
                   <CardContent className="p-4 space-y-2">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="font-bold text-sm text-foreground">{o.nome || 'Sem nome'}</h3>
+                        <h3 className="font-bold text-sm text-foreground">
+                          {o.nome || 'Sem nome'}
+                        </h3>
                         <p className="text-xs font-semibold text-amber-600">
                           Cliente: {cli?.nome || 'Não definido'}
                         </p>
@@ -776,7 +778,9 @@ export const CadastrosView: React.FC = () => {
               <div>
                 <Label className="text-xs font-bold">Tipo</Label>
                 <Input
-                  placeholder={ehVeiculoModal ? 'Caminhão, Caçamba, Carro...' : 'Escavadeira, Retro...'}
+                  placeholder={
+                    ehVeiculoModal ? 'Caminhão, Caçamba, Carro...' : 'Escavadeira, Retro...'
+                  }
                   value={modalMaquina.tipo || ''}
                   onChange={(e) => setModalMaquina({ ...modalMaquina, tipo: e.target.value })}
                   className="h-10 text-xs mt-1"

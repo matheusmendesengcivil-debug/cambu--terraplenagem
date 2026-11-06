@@ -94,7 +94,11 @@ export const saveCliente = async (
       .single()
     return { data, error }
   } else {
-    const { data, error } = await supabase.from('clientes').insert(limparVazios(cliente)).select().single()
+    const { data, error } = await supabase
+      .from('clientes')
+      .insert(limparVazios(cliente))
+      .select()
+      .single()
     return { data, error }
   }
 }
@@ -128,7 +132,11 @@ export const saveObra = async (obra: Partial<Obra>): Promise<{ data: any; error:
       .single()
     return { data, error }
   } else {
-    const { data, error } = await supabase.from('obras').insert(limparVazios(obra)).select().single()
+    const { data, error } = await supabase
+      .from('obras')
+      .insert(limparVazios(obra))
+      .select()
+      .single()
     return { data, error }
   }
 }
@@ -160,7 +168,11 @@ export const saveMaquina = async (
       .single()
     return { data, error }
   } else {
-    const { data, error } = await supabase.from('maquinas').insert(limparVazios(maquina)).select().single()
+    const { data, error } = await supabase
+      .from('maquinas')
+      .insert(limparVazios(maquina))
+      .select()
+      .single()
     return { data, error }
   }
 }
@@ -192,7 +204,11 @@ export const saveFuncionario = async (
       .single()
     return { data, error }
   } else {
-    const { data, error } = await supabase.from('funcionarios').insert(limparVazios(func)).select().single()
+    const { data, error } = await supabase
+      .from('funcionarios')
+      .insert(limparVazios(func))
+      .select()
+      .single()
     return { data, error }
   }
 }

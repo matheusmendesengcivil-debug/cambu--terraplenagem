@@ -45,13 +45,7 @@ export const AnexoPicker: React.FC<AnexoPickerProps> = ({
 
   return (
     <div className={className}>
-      <input
-        ref={fotoRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFile}
-      />
+      <input ref={fotoRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
       <input
         ref={pdfRef}
         type="file"
@@ -61,7 +55,12 @@ export const AnexoPicker: React.FC<AnexoPickerProps> = ({
       />
 
       {enviando ? (
-        <Button type="button" variant="outline" disabled className="w-full h-12 text-xs font-bold gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          disabled
+          className="w-full h-12 text-xs font-bold gap-2"
+        >
           <Loader2 className="w-4 h-4 animate-spin" /> Enviando arquivo...
         </Button>
       ) : !escolhendo ? (
