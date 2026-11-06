@@ -16,6 +16,8 @@ import {
   CheckCircle,
   Search,
   Check,
+  Car,
+  AlertTriangle,
 } from 'lucide-react'
 import {
   getClientes,
@@ -28,14 +30,15 @@ import {
   saveMaquina,
   getTiposServico,
   saveTipoServico,
+  limparTodosDados,
 } from '@/services/cambui'
 import { Cliente, Obra, Funcionario, Maquina, TipoServico } from '@/types/cambui'
-import { formatCurrency } from '@/lib/formatters'
+import { formatCurrency, nomeEquipamento } from '@/lib/formatters'
 import { toast } from 'sonner'
 
 export const CadastrosView: React.FC = () => {
   const [secao, setSecao] = useState<
-    'clientes' | 'obras' | 'maquinas' | 'funcionarios' | 'servicos'
+    'clientes' | 'obras' | 'maquinas' | 'veiculos' | 'funcionarios' | 'servicos'
   >('clientes')
   const [loading, setLoading] = useState(true)
 
@@ -51,6 +54,13 @@ export const CadastrosView: React.FC = () => {
   const [modalMaquina, setModalMaquina] = useState<Partial<Maquina> | null>(null)
   const [modalFuncionario, setModalFuncionario] = useState<Partial<Funcionario> | null>(null)
   const [novoServicoNome, setNovoServicoNome] = useState('')
+  const [modalLimpar, setModalLimpar] = useState(false)
+  const [textoConfirmacao, setTextoConfirmacao] = useState('')
+  const [limpando, setLimpando] = useState(false)
+
+  const listaMaquinas = maquinas.filter((m) => (m.categoria || 'maquina') === 'maquina')
+  const listaVeiculos = maquinas.filter((m) => m.categoria === 'veiculo')
+  const ehVeiculoModal = modalMaquina?.categoria === 'veiculo'
 
   const carregarTudo = async () => {
     setLoading(true)
@@ -106,7 +116,7 @@ export const CadastrosView: React.FC = () => {
   // CLIENTE SUBMIT
   const handleSaveCliente = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!modalCliente?.nome) return
+    if (!modalCliente) return
     try {
       const { error } = await saveCliente(modalCliente)
       if (error) throw error
@@ -121,10 +131,7 @@ export const CadastrosView: React.FC = () => {
   // OBRA SUBMIT
   const handleSaveObra = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!modalObra?.nome || !modalObra?.cliente_id) {
-      toast.error('Informe o nome da obra e vincule a um cliente.')
-      return
-    }
+    if (!modalObra) return
     try {
       const { error } = await saveObra(modalObra)
       if (error) throw error
@@ -139,14 +146,11 @@ export const CadastrosView: React.FC = () => {
   // MAQUINA SUBMIT
   const handleSaveMaquina = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!modalMaquina?.tipo || !modalMaquina?.modelo || !modalMaquina?.placa_identificacao) {
-      toast.error('Preencha os campos obrigatórios da máquina.')
-      return
-    }
+    if (!modalMaquina) return
     try {
       const { error } = await saveMaquina(modalMaquina)
       if (error) throw error
-      toast.success('Máquina salva com sucesso!')
+      toast.success(ehVeiculoModal ? 'Veículo salvo com sucesso!' : 'Máquina salva com sucesso!')
       setModalMaquina(null)
       await carregarTudo()
     } catch (err: any) {
@@ -157,10 +161,7 @@ export const CadastrosView: React.FC = () => {
   // FUNCIONARIO SUBMIT
   const handleSaveFuncionario = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!modalFuncionario?.nome || !modalFuncionario?.funcao) {
-      toast.error('Preencha nome e função do colaborador.')
-      return
-    }
+    if (!modalFuncionario) return
     try {
       const { error } = await saveFuncionario(modalFuncionario)
       if (error) throw error
@@ -183,6 +184,26 @@ export const CadastrosView: React.FC = () => {
       await carregarTudo()
     } catch (err: any) {
       toast.error('Erro ao adicionar serviço: ' + err.message)
+    }
+  }
+
+  const handleLimparTudo = async () => {
+    if (textoConfirmacao.trim().toUpperCase() !== 'EXCLUIR') {
+      toast.error('Digite EXCLUIR para confirmar.')
+      return
+    }
+    setLimpando(true)
+    try {
+      const { error } = await limparTodosDados()
+      if (error) throw error
+      toast.success('Todos os dados foram excluídos.')
+      setModalLimpar(false)
+      setTextoConfirmacao('')
+      await carregarTudo()
+    } catch (err: any) {
+      toast.error('Erro ao excluir dados: ' + (err?.message || 'tente novamente'))
+    } finally {
+      setLimpando(false)
     }
   }
 
@@ -216,7 +237,13 @@ export const CadastrosView: React.FC = () => {
             onClick={() => setSecao('maquinas')}
             className={`px-3 py-1.5 rounded-lg transition-all ${secao === 'maquinas' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
           >
-            Máquinas ({maquinas.length})
+            Máquinas ({listaMaquinas.length})
+          </button>
+          <button
+            onClick={() => setSecao('veiculos')}
+            className={`px-3 py-1.5 rounded-lg transition-all ${secao === 'veiculos' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
+          >
+            Veículos ({listaVeiculos.length})
           </button>
           <button
             onClick={() => setSecao('funcionarios')}
@@ -255,7 +282,7 @@ export const CadastrosView: React.FC = () => {
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="font-bold text-sm text-foreground">{c.nome}</h3>
+                      <h3 className="font-bold text-sm text-foreground">{c.nome || 'Sem nome'}</h3>
                       <p className="text-xs text-muted-foreground">
                         {c.cpf_cnpj || 'Sem CPF/CNPJ'}
                       </p>
@@ -322,7 +349,7 @@ export const CadastrosView: React.FC = () => {
                   <CardContent className="p-4 space-y-2">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="font-bold text-sm text-foreground">{o.nome}</h3>
+                        <h3 className="font-bold text-sm text-foreground">{o.nome || 'Sem nome'}</h3>
                         <p className="text-xs font-semibold text-amber-600">
                           Cliente: {cli?.nome || 'Não definido'}
                         </p>
@@ -367,81 +394,101 @@ export const CadastrosView: React.FC = () => {
         </div>
       )}
 
-      {/* 3. MAQUINAS */}
-      {secao === 'maquinas' && (
+      {/* 3. MAQUINAS e VEÍCULOS */}
+      {(secao === 'maquinas' || secao === 'veiculos') && (
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-xs font-semibold text-muted-foreground">
-              Frota de Máquinas e Equipamentos
+              {secao === 'veiculos'
+                ? 'Veículos (caminhões, carros) — controle por km'
+                : 'Máquinas e Equipamentos — controle por horímetro'}
             </span>
             <Button
               size="sm"
               onClick={() =>
                 setModalMaquina({
+                  categoria: secao === 'veiculos' ? 'veiculo' : 'maquina',
                   status: 'ativa',
                   horimetro_atual: 0,
-                  intervalo_troca_oleo: 250,
-                  valor_hora_padrao: 200,
+                  intervalo_troca_oleo: secao === 'veiculos' ? 10000 : 250,
+                  valor_hora_padrao: 0,
                 })
               }
               className="bg-amber-500 hover:bg-amber-600 text-amber-950 font-bold text-xs h-9 gap-1"
             >
-              <Plus className="w-4 h-4" /> Nova Máquina
+              <Plus className="w-4 h-4" /> {secao === 'veiculos' ? 'Novo Veículo' : 'Nova Máquina'}
             </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {maquinas.map((m) => (
-              <Card key={m.id} className="border-2 shadow-sm">
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-bold text-sm text-foreground">
-                        {m.tipo} - {m.modelo}
-                      </h3>
-                      <p className="text-xs font-mono text-muted-foreground">
-                        {m.placa_identificacao}
-                      </p>
+            {(secao === 'veiculos' ? listaVeiculos : listaMaquinas).map((m) => {
+              const un = m.categoria === 'veiculo' ? 'km' : 'h'
+              return (
+                <Card key={m.id} className="border-2 shadow-sm">
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5">
+                          {m.categoria === 'veiculo' ? (
+                            <Car className="w-4 h-4 text-amber-500" />
+                          ) : (
+                            <HardHat className="w-4 h-4 text-amber-500" />
+                          )}
+                          {nomeEquipamento(m)}
+                        </h3>
+                        <p className="text-xs font-mono text-muted-foreground">
+                          {m.placa_identificacao || 'Sem placa/identificação'}
+                        </p>
+                      </div>
+                      <Badge className="bg-emerald-600 text-[10px] capitalize">{m.status}</Badge>
                     </div>
-                    <Badge className="bg-emerald-600 text-[10px] capitalize">{m.status}</Badge>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-xs bg-muted/40 p-2.5 rounded-lg">
-                    <div>
-                      <span className="text-muted-foreground">Horímetro Atual:</span>
-                      <div className="font-bold font-mono text-foreground text-sm">
-                        {m.horimetro_atual}h
+                    <div className="grid grid-cols-2 gap-2 text-xs bg-muted/40 p-2.5 rounded-lg">
+                      <div>
+                        <span className="text-muted-foreground">
+                          {un === 'km' ? 'Km Atual:' : 'Horímetro Atual:'}
+                        </span>
+                        <div className="font-bold font-mono text-foreground text-sm">
+                          {m.horimetro_atual}
+                          {un}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Valor Cobrado / Hora:</span>
+                        <div className="font-bold font-mono text-amber-600 text-sm">
+                          {formatCurrency(m.valor_hora_padrao)}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Intervalo Troca Óleo:</span>
+                        <div className="font-mono text-foreground">
+                          {m.intervalo_troca_oleo}
+                          {un}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Última Troca:</span>
+                        <div className="font-mono text-foreground">
+                          {m.horimetro_ultima_troca}
+                          {un}
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">Valor Cobrado / Hora:</span>
-                      <div className="font-bold font-mono text-amber-600 text-sm">
-                        {formatCurrency(m.valor_hora_padrao)}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Intervalo Troca Óleo:</span>
-                      <div className="font-mono text-foreground">{m.intervalo_troca_oleo}h</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Última Troca:</span>
-                      <div className="font-mono text-foreground">{m.horimetro_ultima_troca}h</div>
-                    </div>
-                  </div>
 
-                  <div className="flex justify-end gap-1 pt-1 border-t">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setModalMaquina(m)}
-                      className="text-xs h-8 gap-1 font-semibold"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" /> Editar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="flex justify-end gap-1 pt-1 border-t">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setModalMaquina(m)}
+                        className="text-xs h-8 gap-1 font-semibold"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" /> Editar
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         </div>
       )}
@@ -468,7 +515,7 @@ export const CadastrosView: React.FC = () => {
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="font-bold text-sm text-foreground">{f.nome}</h3>
+                      <h3 className="font-bold text-sm text-foreground">{f.nome || 'Sem nome'}</h3>
                       <p className="text-xs text-amber-600 font-semibold">{f.funcao}</p>
                     </div>
                     <Badge
@@ -549,9 +596,8 @@ export const CadastrosView: React.FC = () => {
               {modalCliente.id ? 'Editar Cliente' : 'Novo Cliente'}
             </h3>
             <div>
-              <Label className="text-xs font-bold">Nome / Razão Social *</Label>
+              <Label className="text-xs font-bold">Nome / Razão Social</Label>
               <Input
-                required
                 value={modalCliente.nome || ''}
                 onChange={(e) => setModalCliente({ ...modalCliente, nome: e.target.value })}
                 className="h-10 text-xs mt-1"
@@ -611,24 +657,23 @@ export const CadastrosView: React.FC = () => {
               {modalObra.id ? 'Editar Obra / Local' : 'Nova Obra / Local'}
             </h3>
             <div>
-              <Label className="text-xs font-bold">Cliente Vinculado *</Label>
+              <Label className="text-xs font-bold">Cliente Vinculado</Label>
               <select
-                required
                 value={modalObra.cliente_id || ''}
                 onChange={(e) => setModalObra({ ...modalObra, cliente_id: e.target.value })}
                 className="w-full h-10 text-xs rounded-md border border-input bg-background px-2.5 mt-1 font-semibold"
               >
+                <option value="">— Sem cliente —</option>
                 {clientes.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.nome}
+                    {c.nome || 'Sem nome'}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <Label className="text-xs font-bold">Nome da Obra *</Label>
+              <Label className="text-xs font-bold">Nome da Obra</Label>
               <Input
-                required
                 placeholder="Ex: Represa Sítio Boa Vista"
                 value={modalObra.nome || ''}
                 onChange={(e) => setModalObra({ ...modalObra, nome: e.target.value })}
@@ -700,23 +745,46 @@ export const CadastrosView: React.FC = () => {
             className="bg-card border-2 rounded-2xl p-5 max-w-md w-full space-y-3 shadow-2xl"
           >
             <h3 className="text-base font-black text-foreground">
-              {modalMaquina.id ? 'Editar Máquina' : 'Cadastrar Máquina'}
+              {modalMaquina.id
+                ? ehVeiculoModal
+                  ? 'Editar Veículo'
+                  : 'Editar Máquina'
+                : ehVeiculoModal
+                  ? 'Cadastrar Veículo'
+                  : 'Cadastrar Máquina'}
             </h3>
+            <div>
+              <Label className="text-xs font-bold">Categoria</Label>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                {(['maquina', 'veiculo'] as const).map((c) => (
+                  <button
+                    type="button"
+                    key={c}
+                    onClick={() => setModalMaquina({ ...modalMaquina, categoria: c })}
+                    className={`h-10 rounded-lg border-2 text-xs font-bold ${
+                      (modalMaquina.categoria || 'maquina') === c
+                        ? 'border-amber-500 bg-amber-500/15'
+                        : 'border-border'
+                    }`}
+                  >
+                    {c === 'maquina' ? '🚜 Máquina (horímetro)' : '🚚 Veículo (km)'}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs font-bold">Tipo *</Label>
+                <Label className="text-xs font-bold">Tipo</Label>
                 <Input
-                  required
-                  placeholder="Escavadeira, Caminhão..."
+                  placeholder={ehVeiculoModal ? 'Caminhão, Caçamba, Carro...' : 'Escavadeira, Retro...'}
                   value={modalMaquina.tipo || ''}
                   onChange={(e) => setModalMaquina({ ...modalMaquina, tipo: e.target.value })}
                   className="h-10 text-xs mt-1"
                 />
               </div>
               <div>
-                <Label className="text-xs font-bold">Modelo *</Label>
+                <Label className="text-xs font-bold">Modelo</Label>
                 <Input
-                  required
                   placeholder="CAT 320D, JCB 3CX..."
                   value={modalMaquina.modelo || ''}
                   onChange={(e) => setModalMaquina({ ...modalMaquina, modelo: e.target.value })}
@@ -725,9 +793,8 @@ export const CadastrosView: React.FC = () => {
               </div>
             </div>
             <div>
-              <Label className="text-xs font-bold">Identificação / Placa *</Label>
+              <Label className="text-xs font-bold">Identificação / Placa</Label>
               <Input
-                required
                 placeholder="ESC-01 ou Placa ABC-1234"
                 value={modalMaquina.placa_identificacao || ''}
                 onChange={(e) =>
@@ -738,7 +805,9 @@ export const CadastrosView: React.FC = () => {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs font-bold">Horímetro Atual (h)</Label>
+                <Label className="text-xs font-bold">
+                  {ehVeiculoModal ? 'Km Atual' : 'Horímetro Atual (h)'}
+                </Label>
                 <Input
                   type="number"
                   step="0.1"
@@ -769,16 +838,18 @@ export const CadastrosView: React.FC = () => {
               </div>
             </div>
             <div>
-              <Label className="text-xs font-bold">Intervalo Troca de Óleo (h)</Label>
+              <Label className="text-xs font-bold">
+                Intervalo Troca de Óleo ({ehVeiculoModal ? 'km' : 'h'})
+              </Label>
               <Input
                 type="number"
                 step="1"
-                placeholder="250"
-                value={modalMaquina.intervalo_troca_oleo || 250}
+                placeholder={ehVeiculoModal ? '10000' : '250'}
+                value={modalMaquina.intervalo_troca_oleo || ''}
                 onChange={(e) =>
                   setModalMaquina({
                     ...modalMaquina,
-                    intervalo_troca_oleo: parseInt(e.target.value) || 250,
+                    intervalo_troca_oleo: parseInt(e.target.value) || 0,
                   })
                 }
                 className="h-10 text-xs font-mono mt-1"
@@ -794,7 +865,7 @@ export const CadastrosView: React.FC = () => {
                 Cancelar
               </Button>
               <Button type="submit" size="sm" className="bg-amber-500 text-amber-950 font-bold">
-                Salvar Máquina
+                {ehVeiculoModal ? 'Salvar Veículo' : 'Salvar Máquina'}
               </Button>
             </div>
           </form>
@@ -812,18 +883,16 @@ export const CadastrosView: React.FC = () => {
               {modalFuncionario.id ? 'Editar Colaborador' : 'Novo Colaborador'}
             </h3>
             <div>
-              <Label className="text-xs font-bold">Nome Completo *</Label>
+              <Label className="text-xs font-bold">Nome Completo</Label>
               <Input
-                required
                 value={modalFuncionario.nome || ''}
                 onChange={(e) => setModalFuncionario({ ...modalFuncionario, nome: e.target.value })}
                 className="h-10 text-xs mt-1"
               />
             </div>
             <div>
-              <Label className="text-xs font-bold">Função *</Label>
+              <Label className="text-xs font-bold">Função</Label>
               <Input
-                required
                 placeholder="Operador de escavadeira, motorista..."
                 value={modalFuncionario.funcao || ''}
                 onChange={(e) =>
@@ -873,6 +942,68 @@ export const CadastrosView: React.FC = () => {
               </Button>
             </div>
           </form>
+        </div>
+      )}
+      {/* ZONA DE PERIGO */}
+      <Card className="border-2 border-red-500/40 mt-8">
+        <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-black text-red-600 flex items-center gap-1.5">
+              <AlertTriangle className="w-4 h-4" /> Excluir todos os dados
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Apaga clientes, obras, máquinas, veículos, equipe sem login, lançamentos,
+              abastecimentos, manutenções e cobranças. Os usuários de login e os tipos de serviço
+              são mantidos.
+            </p>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setModalLimpar(true)}
+            className="font-bold text-xs gap-1 shrink-0"
+          >
+            <Trash2 className="w-4 h-4" /> Excluir tudo
+          </Button>
+        </CardContent>
+      </Card>
+
+      {modalLimpar && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card border-2 border-red-500 rounded-2xl p-5 max-w-md w-full space-y-3 shadow-2xl">
+            <h3 className="text-base font-black text-red-600">Excluir TODOS os dados?</h3>
+            <p className="text-xs text-muted-foreground">
+              Essa ação não pode ser desfeita. Para confirmar, digite <b>EXCLUIR</b> abaixo.
+            </p>
+            <Input
+              value={textoConfirmacao}
+              onChange={(e) => setTextoConfirmacao(e.target.value)}
+              placeholder="EXCLUIR"
+              className="h-10 text-sm font-bold"
+            />
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setModalLimpar(false)
+                  setTextoConfirmacao('')
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={limpando}
+                onClick={handleLimparTudo}
+                className="font-bold"
+              >
+                {limpando ? 'Excluindo...' : 'Excluir tudo'}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

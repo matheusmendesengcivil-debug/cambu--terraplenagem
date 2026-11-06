@@ -33,6 +33,7 @@ import { FechamentoView } from '@/components/admin/FechamentoView'
 import { LoginView } from '@/components/auth/LoginView'
 import { isOnline, syncOfflineQueue } from '@/services/cambui'
 import { toast } from 'sonner'
+import { Apontamento } from '@/types/cambui'
 
 export default function Index() {
   const { user, usuario, isAdmin, isOperador, loading, signOut, switchUserSimulated } = useAuth()
@@ -56,6 +57,12 @@ export default function Index() {
   // For Operator: 'home' | 'lancar-dia' | 'foto-folha' | 'abastecimento' | 'manutencao' | 'meus-lancamentos'
   // For Admin: 'dashboard' | 'aprovacoes' | 'cadastros' | 'fechamento' | 'abastecimento' | 'manutencao'
   const [activeTab, setActiveTab] = useState<string>('home')
+  // Lançamento sendo editado (admin ou operador)
+  const [editando, setEditando] = useState<Apontamento | null>(null)
+  const abrirEdicao = (ap: Apontamento) => {
+    setEditando(ap)
+    setActiveTab('editar-lancamento')
+  }
 
   useEffect(() => {
     if (darkMode) {
@@ -220,6 +227,18 @@ export default function Index() {
           </button>
 
           <button
+            onClick={() => setActiveTab('lancamentos')}
+            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 transition-all ${
+              ['lancamentos', 'lancar-dia', 'foto-folha', 'editar-lancamento'].includes(activeTab)
+                ? 'bg-amber-500 text-amber-950 font-black shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Clock className="w-4 h-4" />
+            Lançamentos
+          </button>
+
+          <button
             onClick={() => setActiveTab('aprovacoes')}
             className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 transition-all ${
               activeTab === 'aprovacoes'
@@ -315,6 +334,18 @@ export default function Index() {
               <MeusLancamentos
                 onBack={() => setActiveTab('home')}
                 onNovo={() => setActiveTab('lancar-dia')}
+                onEditar={abrirEdicao}
+              />
+            )}
+            {activeTab === 'editar-lancamento' && editando && (
+              <LancarDiaForm
+                key={editando.id}
+                editing={editando}
+                onBack={() => setActiveTab('meus-lancamentos')}
+                onSuccess={() => {
+                  setEditando(null)
+                  setActiveTab('meus-lancamentos')
+                }}
               />
             )}
           </>
@@ -324,6 +355,54 @@ export default function Index() {
         {isAdmin && (
           <>
             {activeTab === 'dashboard' && <AdminDashboard />}
+            {activeTab === 'lancamentos' && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2 max-w-lg mx-auto">
+                  <Button
+                    onClick={() => setActiveTab('lancar-dia')}
+                    className="h-12 bg-amber-500 hover:bg-amber-600 text-amber-950 font-black gap-2"
+                  >
+                    <Clock className="w-4 h-4" /> Lançar Dia
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setActiveTab('foto-folha')}
+                    className="h-12 font-bold gap-2 border-2"
+                  >
+                    <Camera className="w-4 h-4 text-amber-500" /> Foto / PDF
+                  </Button>
+                </div>
+                <MeusLancamentos
+                  isAdmin
+                  onBack={() => setActiveTab('dashboard')}
+                  onNovo={() => setActiveTab('lancar-dia')}
+                  onEditar={abrirEdicao}
+                />
+              </div>
+            )}
+            {activeTab === 'lancar-dia' && (
+              <LancarDiaForm
+                onBack={() => setActiveTab('lancamentos')}
+                onSuccess={() => setActiveTab('lancamentos')}
+              />
+            )}
+            {activeTab === 'foto-folha' && (
+              <FotoFolhaView
+                onBack={() => setActiveTab('lancamentos')}
+                onSuccess={() => setActiveTab('lancamentos')}
+              />
+            )}
+            {activeTab === 'editar-lancamento' && editando && (
+              <LancarDiaForm
+                key={editando.id}
+                editing={editando}
+                onBack={() => setActiveTab('lancamentos')}
+                onSuccess={() => {
+                  setEditando(null)
+                  setActiveTab('lancamentos')
+                }}
+              />
+            )}
             {activeTab === 'aprovacoes' && <AprovacoesView />}
             {activeTab === 'cadastros' && <CadastrosView />}
             {activeTab === 'fechamento' && <FechamentoView />}
@@ -373,7 +452,7 @@ export default function Index() {
             }`}
           >
             <Camera className="w-5 h-5" />
-            Foto Folha
+            Foto/PDF
           </button>
 
           <button

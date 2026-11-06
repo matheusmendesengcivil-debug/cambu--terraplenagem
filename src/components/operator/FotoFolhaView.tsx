@@ -28,6 +28,9 @@ import {
 import { processarFotoFolhaIA, LeituraFolhaResultado } from '@/services/ocr-vision'
 import { Maquina, Obra, Cliente, Funcionario, TipoServico } from '@/types/cambui'
 import { toast } from 'sonner'
+import { AnexoPicker, AnexoThumb } from '@/components/shared/AnexoPicker'
+import { isPdfUrl } from '@/services/cambui'
+import { nomeEquipamento, isVeiculo } from '@/lib/formatters'
 
 interface FotoFolhaViewProps {
   onBack: () => void
@@ -38,9 +41,7 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
   const { usuario, user } = useAuth()
 
   const [etapa, setEtapa] = useState<'captura' | 'processando' | 'conferencia'>('captura')
-  const [fotoUrl, setFotoUrl] = useState<string>(
-    'https://img.usecurling.com/p/800/1000?q=document%20notes&color=gray',
-  )
+  const [fotoUrl, setFotoUrl] = useState<string>('')
   const [loading, setLoading] = useState(false)
 
   const [maquinas, setMaquinas] = useState<Maquina[]>([])
@@ -50,7 +51,7 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
   const [tiposServico, setTiposServico] = useState<TipoServico[]>([])
 
   // Extracted values for conference screen
-  const [data, setData] = useState('')
+  const [data, setData] = useState(new Date().toISOString().split('T')[0])
   const [funcionarioId, setFuncionarioId] = useState('')
   const [maquinaId, setMaquinaId] = useState('')
   const [obraId, setObraId] = useState('')
@@ -80,13 +81,24 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
     init()
   }, [])
 
-  const handleSimularCaptura = async () => {
+  const handleArquivoEnviado = async (url: string, tipo: 'foto' | 'pdf') => {
+    setFotoUrl(url)
+    if (tipo === 'pdf') {
+      // PDF: vai direto para a conferência, campos em branco para preencher
+      toast.info('PDF salvo! Preencha os dados que quiser (todos opcionais).')
+      setEtapa('conferencia')
+      return
+    }
+    await handleSimularCaptura(url)
+  }
+
+  const handleSimularCaptura = async (url: string) => {
     setEtapa('processando')
     setLoading(true)
 
     try {
       // Simulate OCR vision processing
-      const resultado = await processarFotoFolhaIA(fotoUrl, {
+      const resultado = await processarFotoFolhaIA(url, {
         funcionarios,
         maquinas,
         clientes,
@@ -95,9 +107,9 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
       })
 
       setData(resultado.dados.data)
-      setFuncionarioId(resultado.dados.funcionarioId || (funcionarios[0]?.id ?? ''))
-      setMaquinaId(resultado.dados.maquinaId || (maquinas[0]?.id ?? ''))
-      setObraId(resultado.dados.obraId || (obras[0]?.id ?? ''))
+      setFuncionarioId(resultado.dados.funcionarioId || '')
+      setMaquinaId(resultado.dados.maquinaId || '')
+      setObraId(resultado.dados.obraId || '')
       setHorimetroInicial(resultado.dados.horimetroInicial.toString())
       setHorimetroFinal(resultado.dados.horimetroFinal.toString())
       setServicosIds(resultado.dados.servicosIds)
@@ -120,25 +132,27 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
       const obraSel = obras.find((o) => o.id === obraId)
       const hIni = parseFloat(horimetroInicial) || 0
       const hFim = parseFloat(horimetroFinal) || 0
-      const horas = hFim > hIni ? hFim - hIni : 0
+      const temMedicao = horimetroInicial !== '' && horimetroFinal !== '' && hFim > hIni
+      const maqSel = maquinas.find((m) => m.id === maquinaId)
 
       const res = await saveApontamento(
         {
           data,
-          funcionario_id: funcionarioId || (funcionarios[0]?.id ?? ''),
-          maquina_id: maquinaId || (maquinas[0]?.id ?? ''),
-          cliente_id: obraSel?.cliente_id || (clientes[0]?.id ?? ''),
-          obra_id: obraId || (obras[0]?.id ?? ''),
-          horimetro_inicial: hIni,
-          horimetro_final: hFim,
-          horas_trabalhadas: Number(horas.toFixed(1)),
+          funcionario_id: funcionarioId || null,
+          maquina_id: maquinaId || null,
+          cliente_id: obraSel?.cliente_id || null,
+          obra_id: obraId || null,
+          horimetro_inicial: horimetroInicial === '' ? null : hIni,
+          horimetro_final: horimetroFinal === '' ? null : hFim,
+          horas_trabalhadas:
+            temMedicao && !isVeiculo(maqSel) ? Number((hFim - hIni).toFixed(1)) : null,
           descricao,
           status: comoRascunho ? 'rascunho_foto' : 'pendente',
           origem_foto: true,
-          foto_folha_url: fotoUrl,
+          foto_folha_url: fotoUrl || null,
         },
         servicosIds,
-        [fotoUrl],
+        fotoUrl ? [fotoUrl] : [],
       )
 
       if (comoRascunho) {
@@ -163,7 +177,7 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
         </Button>
         <div>
           <h2 className="text-xl font-black text-foreground tracking-tight">
-            ENVIO POR FOTO DA FOLHA
+            ENVIAR FOTO OU PDF
           </h2>
           <p className="text-xs text-muted-foreground">
             Digitalização com tela de conferência inteligente
@@ -176,7 +190,7 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
           <CardHeader className="p-4 pb-2 border-b bg-muted/40">
             <CardTitle className="text-sm font-bold flex items-center gap-2">
               <Camera className="w-4 h-4 text-amber-500" />
-              Fotografar Folha de Papel do Dia
+              Enviar Folha do Dia (Foto ou PDF)
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-4 text-center">
@@ -184,43 +198,17 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
               <div className="w-16 h-16 rounded-2xl bg-amber-500/20 flex items-center justify-center">
                 <FileText className="w-8 h-8 text-amber-600" />
               </div>
-              <div className="text-sm font-bold">Aponte a câmera para a folha preenchida</div>
+              <div className="text-sm font-bold">Escolha se vai enviar uma foto ou um PDF</div>
               <p className="text-xs text-muted-foreground max-w-xs">
-                Certifique-se de que a data, operador, horímetro inicial/final e nome da obra
-                estejam visíveis e legíveis.
+                O arquivo fica salvo no sistema junto com o lançamento.
               </p>
-              <div className="w-full max-w-xs mt-2 rounded-xl overflow-hidden border">
-                <img
-                  src={fotoUrl}
-                  alt="Amostra de ficha em papel"
-                  className="w-full h-44 object-cover"
-                />
-              </div>
             </div>
 
-            <div className="space-y-2 pt-2">
-              <Button
-                onClick={handleSimularCaptura}
-                className="w-full h-16 text-base font-black bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl gap-2 shadow-lg"
-              >
-                <Camera className="w-5 h-5" />
-                TIRAR FOTO E LER COM IA
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setFotoUrl(
-                    'https://img.usecurling.com/p/800/1000?q=handwritten%20report&color=yellow',
-                  )
-                  toast.success('Foto da galeria selecionada!')
-                }}
-                className="w-full h-12 text-xs font-bold"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Escolher outra foto da galeria
-              </Button>
-            </div>
+            <AnexoPicker
+              pasta="folhas"
+              label="Enviar foto ou PDF"
+              onUploaded={handleArquivoEnviado}
+            />
           </CardContent>
         </Card>
       )}
@@ -255,17 +243,21 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
           {/* Side-by-side or stacked photo thumbnail */}
           <div className="border rounded-xl p-3 bg-card flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <img src={fotoUrl} alt="Folha" className="w-14 h-14 rounded-lg object-cover border" />
+              {fotoUrl && <AnexoThumb url={fotoUrl} size="w-14 h-14" />}
               <div>
-                <span className="text-xs font-bold text-foreground">Foto Original Anexada</span>
+                <span className="text-xs font-bold text-foreground">
+                  {isPdfUrl(fotoUrl) ? 'PDF Anexado' : 'Foto Original Anexada'}
+                </span>
                 <p className="text-[11px] text-muted-foreground">
                   Ficha de campo arquivada no apontamento
                 </p>
               </div>
             </div>
-            <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">
-              85% confiança
-            </Badge>
+            {!isPdfUrl(fotoUrl) && (
+              <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">
+                85% confiança
+              </Badge>
+            )}
           </div>
 
           {/* Form fields with confidence highlights */}
@@ -295,9 +287,10 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
                     onChange={(e) => setFuncionarioId(e.target.value)}
                     className="w-full h-11 text-xs rounded-md border border-input bg-background px-2.5 mt-1"
                   >
+                    <option value="">— Não informado —</option>
                     {funcionarios.map((f) => (
                       <option key={f.id} value={f.id}>
-                        {f.nome}
+                        {f.nome || 'Sem nome'}
                       </option>
                     ))}
                   </select>
@@ -305,15 +298,18 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
               </div>
 
               <div>
-                <Label className="text-xs font-bold">Máquina Utilizada</Label>
+                <Label className="text-xs font-bold">Máquina / Veículo</Label>
                 <select
                   value={maquinaId}
                   onChange={(e) => setMaquinaId(e.target.value)}
                   className="w-full h-11 text-xs rounded-md border border-input bg-background px-2.5 mt-1"
                 >
+                  <option value="">— Não informado —</option>
                   {maquinas.map((m) => (
                     <option key={m.id} value={m.id}>
-                      {m.tipo} - {m.modelo} ({m.placa_identificacao})
+                      {isVeiculo(m) ? '🚚 ' : '🚜 '}
+                      {nomeEquipamento(m)}
+                      {m.placa_identificacao ? ` (${m.placa_identificacao})` : ''}
                     </option>
                   ))}
                 </select>
@@ -338,9 +334,10 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
                   onChange={(e) => setObraId(e.target.value)}
                   className="w-full h-11 text-xs rounded-md border border-input bg-background px-2.5"
                 >
+                  <option value="">— Não informado —</option>
                   {obras.map((o) => (
                     <option key={o.id} value={o.id}>
-                      {o.nome} (Cliente: {o.cliente?.nome || 'Cliente'})
+                      {o.nome || 'Sem nome'} (Cliente: {o.cliente?.nome || '—'})
                     </option>
                   ))}
                 </select>
@@ -348,7 +345,9 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs font-bold">Horímetro Inicial</Label>
+                  <Label className="text-xs font-bold">
+                    {isVeiculo(maquinas.find((m) => m.id === maquinaId)) ? 'Km Inicial' : 'Horímetro Inicial'}
+                  </Label>
                   <Input
                     type="number"
                     step="0.1"
@@ -358,7 +357,9 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
                   />
                 </div>
                 <div>
-                  <Label className="text-xs font-bold">Horímetro Final</Label>
+                  <Label className="text-xs font-bold">
+                    {isVeiculo(maquinas.find((m) => m.id === maquinaId)) ? 'Km Final' : 'Horímetro Final'}
+                  </Label>
                   <Input
                     type="number"
                     step="0.1"

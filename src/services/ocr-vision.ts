@@ -36,9 +36,9 @@ export interface LeituraFolhaResultado {
 }
 
 // Simple Levenshtein distance for fuzzy matching names
-function similarity(s1: string, s2: string): number {
-  const a = s1.toLowerCase().trim()
-  const b = s2.toLowerCase().trim()
+function similarity(s1: string | null, s2: string | null): number {
+  const a = (s1 || '').toLowerCase().trim()
+  const b = (s2 || '').toLowerCase().trim()
   if (a === b) return 1.0
   if (a.includes(b) || b.includes(a)) return 0.8
 

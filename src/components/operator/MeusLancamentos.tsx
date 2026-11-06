@@ -14,17 +14,34 @@ import {
   FileText,
   Calendar,
   Sparkles,
+  Edit2,
+  Trash2,
 } from 'lucide-react'
-import { getApontamentos } from '@/services/cambui'
+import { getApontamentos, deleteApontamento } from '@/services/cambui'
 import { Apontamento } from '@/types/cambui'
-import { formatDateBR, formatHoursShort } from '@/lib/formatters'
+import {
+  formatDateBR,
+  formatHoursShort,
+  isVeiculo,
+  unidadeMedidor,
+  nomeEquipamento,
+} from '@/lib/formatters'
+import { AnexoThumb } from '@/components/shared/AnexoPicker'
+import { toast } from 'sonner'
 
 interface MeusLancamentosProps {
   onBack: () => void
   onNovo: () => void
+  onEditar?: (ap: Apontamento) => void
+  isAdmin?: boolean
 }
 
-export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({ onBack, onNovo }) => {
+export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({
+  onBack,
+  onNovo,
+  onEditar,
+  isAdmin = false,
+}) => {
   const [apontamentos, setApontamentos] = useState<Apontamento[]>([])
   const [loading, setLoading] = useState(true)
   const [filtroStatus, setFiltroStatus] = useState<string>('todos')
@@ -44,15 +61,31 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({ onBack, onNovo
     loadData()
   }, [])
 
+  const handleExcluir = async (ap: Apontamento) => {
+    if (!window.confirm('Excluir este lançamento? Essa ação não pode ser desfeita.')) return
+    const { error } = await deleteApontamento(ap.id)
+    if (error) {
+      toast.error('Erro ao excluir: ' + error.message)
+      return
+    }
+    toast.success('Lançamento excluído.')
+    await loadData()
+  }
+
+  // Operador só edita o que ainda não foi aprovado; admin edita tudo
+  const podeEditar = (ap: Apontamento) =>
+    !ap.is_offline && (isAdmin || ap.status !== 'aprovado')
+
   const filtrados = apontamentos.filter((a) => {
     if (filtroStatus !== 'todos' && a.status !== filtroStatus) return false
     if (busca) {
       const q = busca.toLowerCase()
-      const maq = (a.maquina?.modelo || '').toLowerCase()
+      const maq = nomeEquipamento(a.maquina).toLowerCase()
+      const op = (a.funcionario?.nome || '').toLowerCase()
       const obr = (a.obra?.nome || '').toLowerCase()
       const cli = (a.cliente?.nome || '').toLowerCase()
       const desc = (a.descricao || '').toLowerCase()
-      return maq.includes(q) || obr.includes(q) || cli.includes(q) || desc.includes(q)
+      return maq.includes(q) || op.includes(q) || obr.includes(q) || cli.includes(q) || desc.includes(q)
     }
     return true
   })
@@ -65,8 +98,12 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({ onBack, onNovo
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h2 className="text-xl font-black text-foreground tracking-tight">MEUS LANÇAMENTOS</h2>
-            <p className="text-xs text-muted-foreground">Histórico de apontamentos de campo</p>
+            <h2 className="text-xl font-black text-foreground tracking-tight">
+              {isAdmin ? 'LANÇAMENTOS' : 'MEUS LANÇAMENTOS'}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {isAdmin ? 'Todos os apontamentos — toque em Editar para alterar' : 'Histórico de apontamentos de campo'}
+            </p>
           </div>
         </div>
         <Button
@@ -166,23 +203,41 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({ onBack, onNovo
                       )}
                     </div>
                     <h3 className="font-bold text-sm text-foreground mt-1">
-                      {ap.maquina?.tipo} - {ap.maquina?.modelo}
+                      {nomeEquipamento(ap.maquina)}
                     </h3>
                     <p className="text-xs text-muted-foreground">
                       Obra:{' '}
                       <span className="font-semibold text-foreground">
-                        {ap.obra?.nome || 'Obra'}
+                        {ap.obra?.nome || 'Não informada'}
                       </span>
                     </p>
+                    {isAdmin && (
+                      <p className="text-xs text-muted-foreground">
+                        Operador:{' '}
+                        <span className="font-semibold text-foreground">
+                          {ap.funcionario?.nome || 'Não informado'}
+                        </span>
+                      </p>
+                    )}
                   </div>
 
                   <div className="text-right">
                     <div className="text-xl font-black text-amber-600">
-                      {formatHoursShort(ap.horas_trabalhadas)}
+                      {isVeiculo(ap.maquina)
+                        ? ap.horimetro_final != null && ap.horimetro_inicial != null
+                          ? `${(Number(ap.horimetro_final) - Number(ap.horimetro_inicial)).toFixed(1)} km`
+                          : '—'
+                        : ap.horas_trabalhadas != null
+                          ? formatHoursShort(ap.horas_trabalhadas)
+                          : '—'}
                     </div>
-                    <div className="text-[11px] font-mono text-muted-foreground">
-                      {ap.horimetro_inicial}h → {ap.horimetro_final}h
-                    </div>
+                    {(ap.horimetro_inicial != null || ap.horimetro_final != null) && (
+                      <div className="text-[11px] font-mono text-muted-foreground">
+                        {ap.horimetro_inicial ?? '?'}
+                        {unidadeMedidor(ap.maquina)} → {ap.horimetro_final ?? '?'}
+                        {unidadeMedidor(ap.maquina)}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -222,6 +277,39 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({ onBack, onNovo
                     🚛 {ap.quantidade_viagens} viagens de caminhão
                   </div>
                 ) : null}
+
+                {ap.fotos && ap.fotos.length > 0 && (
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {ap.fotos.map((f) => (
+                      <AnexoThumb key={f.id} url={f.url} size="w-14 h-14" />
+                    ))}
+                  </div>
+                )}
+
+                {(onEditar || isAdmin) && (
+                  <div className="flex justify-end gap-1 pt-2 border-t">
+                    {onEditar && podeEditar(ap) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEditar(ap)}
+                        className="text-xs h-8 gap-1 font-semibold"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" /> Editar
+                      </Button>
+                    )}
+                    {isAdmin && !ap.is_offline && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleExcluir(ap)}
+                        className="text-xs h-8 gap-1 font-semibold text-destructive"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Excluir
+                      </Button>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
