@@ -73,7 +73,8 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({
   }
 
   // Operador só edita o que ainda não foi aprovado; admin edita tudo
-  const podeEditar = (ap: Apontamento) => !ap.is_offline && (isAdmin || ap.status !== 'aprovado')
+  const podeEditar = (ap: Apontamento) =>
+    !ap.is_offline && (isAdmin || ap.status !== 'aprovado')
 
   const filtrados = apontamentos.filter((a) => {
     if (filtroStatus !== 'todos' && a.status !== filtroStatus) return false
@@ -84,9 +85,7 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({
       const obr = (a.obra?.nome || '').toLowerCase()
       const cli = (a.cliente?.nome || '').toLowerCase()
       const desc = (a.descricao || '').toLowerCase()
-      return (
-        maq.includes(q) || op.includes(q) || obr.includes(q) || cli.includes(q) || desc.includes(q)
-      )
+      return maq.includes(q) || op.includes(q) || obr.includes(q) || cli.includes(q) || desc.includes(q)
     }
     return true
   })
@@ -103,16 +102,14 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({
               {isAdmin ? 'LANÇAMENTOS' : 'MEUS LANÇAMENTOS'}
             </h2>
             <p className="text-xs text-muted-foreground">
-              {isAdmin
-                ? 'Todos os apontamentos — toque em Editar para alterar'
-                : 'Histórico de apontamentos de campo'}
+              {isAdmin ? 'Todos os apontamentos — toque em Editar para alterar' : 'Histórico de apontamentos de campo'}
             </p>
           </div>
         </div>
         <Button
           onClick={onNovo}
           size="sm"
-          className="bg-amber-500 hover:bg-amber-600 text-amber-950 font-bold text-xs h-9"
+          className="bg-pepsi-600 hover:bg-pepsi-700 text-white font-bold text-xs h-9"
         >
           + Lançar
         </Button>
@@ -199,7 +196,7 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({
                       ) : (
                         <Badge
                           variant="outline"
-                          className="border-amber-500 text-amber-600 text-[10px] px-1.5 py-0 h-4"
+                          className="border-pepsi-600 text-pepsi-600 dark:text-pepsi-300 text-[10px] px-1.5 py-0 h-4"
                         >
                           Pendente
                         </Badge>
@@ -225,7 +222,7 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({
                   </div>
 
                   <div className="text-right">
-                    <div className="text-xl font-black text-amber-600">
+                    <div className="text-xl font-black text-pepsi-600 dark:text-pepsi-300">
                       {isVeiculo(ap.maquina)
                         ? ap.horimetro_final != null && ap.horimetro_inicial != null
                           ? `${(Number(ap.horimetro_final) - Number(ap.horimetro_inicial)).toFixed(1)} km`
