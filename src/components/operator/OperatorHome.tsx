@@ -115,7 +115,7 @@ export const OperatorHome: React.FC<OperatorHomeProps> = ({ onNavigate }) => {
       <div
         className={`p-3 rounded-lg flex items-center justify-between text-xs font-semibold ${
           online
-            ? 'bg-amber-500/10 text-amber-900 dark:text-amber-300 border border-amber-500/20'
+            ? 'bg-prata-300/25 text-pepsi-900 dark:text-pepsi-300 border border-prata-400/50'
             : 'bg-red-500/20 text-red-900 dark:text-red-300 border border-red-500/40'
         }`}
       >
@@ -133,7 +133,7 @@ export const OperatorHome: React.FC<OperatorHomeProps> = ({ onNavigate }) => {
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 text-xs px-2 gap-1 text-amber-900 dark:text-amber-200"
+            className="h-7 text-xs px-2 gap-1 text-pepsi-900 dark:text-pepsi-200"
             onClick={handleSync}
             disabled={syncing}
           >
@@ -150,7 +150,7 @@ export const OperatorHome: React.FC<OperatorHomeProps> = ({ onNavigate }) => {
             Operador de Campo
           </span>
           <h2 className="text-xl font-bold text-foreground flex items-center gap-1.5">
-            <HardHat className="w-5 h-5 text-amber-500" />
+            <HardHat className="w-5 h-5 text-pepsi-500" />
             {usuario?.nome || 'Operador Cambuí'}
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">{usuario?.email}</p>
@@ -168,13 +168,13 @@ export const OperatorHome: React.FC<OperatorHomeProps> = ({ onNavigate }) => {
       </div>
 
       {/* Reminder banner if operator hasn't launched */}
-      <div className="bg-amber-500/15 border-2 border-amber-500/30 rounded-xl p-3.5 flex items-start gap-3">
-        <Bell className="w-5 h-5 text-amber-600 shrink-0 mt-0.5 animate-bounce" />
+      <div className="bg-prata-300/35 border-2 border-prata-400/60 rounded-xl p-3.5 flex items-start gap-3">
+        <Bell className="w-5 h-5 text-pepsi-600 dark:text-pepsi-300 shrink-0 mt-0.5 animate-bounce" />
         <div className="text-xs flex-1">
-          <p className="font-bold text-amber-950 dark:text-amber-200 text-sm">
+          <p className="font-bold text-pepsi-950 dark:text-pepsi-200 text-sm">
             Lembrete de Fechamento Diário
           </p>
-          <p className="text-amber-900/80 dark:text-amber-300 mt-0.5">
+          <p className="text-pepsi-900/80 dark:text-pepsi-300 mt-0.5">
             Ao encerrar a jornada com a máquina, lance o horímetro final ou fotografe sua ficha em
             papel!
           </p>
@@ -183,10 +183,10 @@ export const OperatorHome: React.FC<OperatorHomeProps> = ({ onNavigate }) => {
 
       {/* Large hours summary cards */}
       <div className="grid grid-cols-2 gap-3">
-        <Card className="border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-transparent">
+        <Card className="border-2 border-prata-400/60 bg-gradient-to-br from-prata-300/25 to-transparent">
           <CardHeader className="p-3 pb-1">
             <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-amber-500" /> Horas na Semana
+              <Clock className="w-3.5 h-3.5 text-pepsi-500" /> Horas na Semana
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0">
@@ -216,11 +216,11 @@ export const OperatorHome: React.FC<OperatorHomeProps> = ({ onNavigate }) => {
       <div className="space-y-3 pt-1">
         <Button
           onClick={() => onNavigate('lancar-dia')}
-          className="w-full h-20 text-lg font-black bg-amber-500 hover:bg-amber-600 text-amber-950 shadow-lg border-2 border-amber-600/30 rounded-2xl flex items-center justify-between px-5 transition-transform active:scale-[0.98]"
+          className="w-full h-20 text-lg font-black bg-pepsi-600 hover:bg-pepsi-700 text-white shadow-lg border-2 border-prata-400/60 rounded-2xl flex items-center justify-between px-5 transition-transform active:scale-[0.98]"
         >
           <div className="flex items-center gap-3.5 text-left">
-            <div className="w-12 h-12 rounded-xl bg-amber-600/20 flex items-center justify-center shrink-0">
-              <HardHat className="w-7 h-7 text-amber-950" />
+            <div className="w-12 h-12 rounded-xl bg-prata-300/45 flex items-center justify-center shrink-0">
+              <HardHat className="w-7 h-7 text-white" />
             </div>
             <div>
               <div className="text-lg leading-tight">LANÇAR MEU DIA</div>
@@ -239,7 +239,7 @@ export const OperatorHome: React.FC<OperatorHomeProps> = ({ onNavigate }) => {
         >
           <div className="flex items-center gap-3.5 text-left">
             <div className="w-11 h-11 rounded-xl bg-zinc-700 flex items-center justify-center shrink-0">
-              <Camera className="w-6 h-6 text-amber-400" />
+              <Camera className="w-6 h-6 text-pepsi-400" />
             </div>
             <div>
               <div className="text-base leading-tight">ENVIAR FOTO DA FOLHA</div>
@@ -253,10 +253,10 @@ export const OperatorHome: React.FC<OperatorHomeProps> = ({ onNavigate }) => {
           <Button
             onClick={() => onNavigate('abastecimento')}
             variant="outline"
-            className="h-16 font-bold text-sm bg-card hover:bg-amber-500/10 border-2 rounded-xl flex items-center gap-2.5 px-3.5 justify-start text-left"
+            className="h-16 font-bold text-sm bg-card hover:bg-prata-300/25 border-2 rounded-xl flex items-center gap-2.5 px-3.5 justify-start text-left"
           >
-            <div className="w-9 h-9 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
-              <Fuel className="w-5 h-5 text-amber-500" />
+            <div className="w-9 h-9 rounded-lg bg-prata-300/35 flex items-center justify-center shrink-0">
+              <Fuel className="w-5 h-5 text-pepsi-500" />
             </div>
             <div className="leading-tight">
               <div>Abastecimento</div>
@@ -269,10 +269,10 @@ export const OperatorHome: React.FC<OperatorHomeProps> = ({ onNavigate }) => {
           <Button
             onClick={() => onNavigate('manutencao')}
             variant="outline"
-            className="h-16 font-bold text-sm bg-card hover:bg-amber-500/10 border-2 rounded-xl flex items-center gap-2.5 px-3.5 justify-start text-left"
+            className="h-16 font-bold text-sm bg-card hover:bg-prata-300/25 border-2 rounded-xl flex items-center gap-2.5 px-3.5 justify-start text-left"
           >
-            <div className="w-9 h-9 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
-              <Wrench className="w-5 h-5 text-amber-500" />
+            <div className="w-9 h-9 rounded-lg bg-prata-300/35 flex items-center justify-center shrink-0">
+              <Wrench className="w-5 h-5 text-pepsi-500" />
             </div>
             <div className="leading-tight">
               <div>Manutenção</div>
@@ -292,7 +292,7 @@ export const OperatorHome: React.FC<OperatorHomeProps> = ({ onNavigate }) => {
           </div>
           <Badge
             variant="outline"
-            className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/30"
+            className="text-xs bg-prata-300/25 text-pepsi-600 dark:text-pepsi-300 border-prata-400/60"
           >
             {apontamentos.length} total
           </Badge>
@@ -306,7 +306,7 @@ export const OperatorHome: React.FC<OperatorHomeProps> = ({ onNavigate }) => {
           <Button
             variant="ghost"
             size="sm"
-            className="text-xs text-amber-600 h-7 px-1.5"
+            className="text-xs text-pepsi-600 dark:text-pepsi-300 h-7 px-1.5"
             onClick={() => onNavigate('meus-lancamentos')}
           >
             Ver todos
@@ -325,7 +325,7 @@ export const OperatorHome: React.FC<OperatorHomeProps> = ({ onNavigate }) => {
               <div
                 key={ap.id}
                 onClick={() => onNavigate('meus-lancamentos')}
-                className="p-3 border rounded-xl bg-card hover:border-amber-500/50 transition-colors cursor-pointer flex items-center justify-between gap-2"
+                className="p-3 border rounded-xl bg-card hover:border-prata-400/80 transition-colors cursor-pointer flex items-center justify-between gap-2"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -352,7 +352,7 @@ export const OperatorHome: React.FC<OperatorHomeProps> = ({ onNavigate }) => {
                     ) : (
                       <Badge
                         variant="outline"
-                        className="border-amber-500 text-amber-600 text-[10px] px-1.5 py-0 h-4"
+                        className="border-pepsi-600 text-pepsi-600 dark:text-pepsi-300 text-[10px] px-1.5 py-0 h-4"
                       >
                         Pendente
                       </Badge>

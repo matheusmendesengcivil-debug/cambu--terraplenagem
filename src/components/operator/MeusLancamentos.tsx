@@ -109,7 +109,7 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({
         <Button
           onClick={onNovo}
           size="sm"
-          className="bg-amber-500 hover:bg-amber-600 text-amber-950 font-bold text-xs h-9"
+          className="bg-pepsi-600 hover:bg-pepsi-700 text-white font-bold text-xs h-9"
         >
           + Lançar
         </Button>
@@ -196,7 +196,7 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({
                       ) : (
                         <Badge
                           variant="outline"
-                          className="border-amber-500 text-amber-600 text-[10px] px-1.5 py-0 h-4"
+                          className="border-pepsi-600 text-pepsi-600 dark:text-pepsi-300 text-[10px] px-1.5 py-0 h-4"
                         >
                           Pendente
                         </Badge>
@@ -222,7 +222,7 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({
                   </div>
 
                   <div className="text-right">
-                    <div className="text-xl font-black text-amber-600">
+                    <div className="text-xl font-black text-pepsi-600 dark:text-pepsi-300">
                       {isVeiculo(ap.maquina)
                         ? ap.horimetro_final != null && ap.horimetro_inicial != null
                           ? `${(Number(ap.horimetro_final) - Number(ap.horimetro_inicial)).toFixed(1)} km`

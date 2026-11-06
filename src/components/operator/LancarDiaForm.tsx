@@ -291,11 +291,11 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
         </Card>
 
         {/* 2. MÁQUINA E HORÍMETROS */}
-        <Card className="border-2 border-amber-500/40 shadow-sm">
-          <CardHeader className="p-3.5 pb-2 border-b bg-amber-500/10">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200 flex items-center justify-between">
+        <Card className="border-2 border-prata-400/70 shadow-sm">
+          <CardHeader className="p-3.5 pb-2 border-b bg-prata-300/25">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-pepsi-900 dark:text-pepsi-200 flex items-center justify-between">
               <span>2. Máquina / Veículo & {veiculo ? 'Km' : 'Horímetro'}</span>
-              <HardHat className="w-4 h-4 text-amber-500" />
+              <HardHat className="w-4 h-4 text-pepsi-500" />
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3.5 space-y-3">
@@ -308,7 +308,7 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
                       type="button"
                       key={c}
                       onClick={() => setFiltroCategoria(c)}
-                      className={`px-2 py-1 rounded-md ${filtroCategoria === c ? 'bg-amber-500 text-amber-950' : 'bg-muted text-muted-foreground'}`}
+                      className={`px-2 py-1 rounded-md ${filtroCategoria === c ? 'bg-pepsi-600 text-white' : 'bg-muted text-muted-foreground'}`}
                     >
                       {c === 'todos' ? 'Todos' : c === 'maquina' ? 'Máquinas' : 'Veículos'}
                     </button>
@@ -325,8 +325,8 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
                       onClick={() => handleSelectMaquina(m.id)}
                       className={`p-3 rounded-xl border-2 text-left flex items-center justify-between transition-all ${
                         isSelected
-                          ? 'border-amber-500 bg-amber-500/15 font-bold shadow-sm'
-                          : 'border-border bg-card hover:border-amber-500/40'
+                          ? 'border-pepsi-600 bg-prata-300/35 font-bold shadow-sm'
+                          : 'border-border bg-card hover:border-prata-400/70'
                       }`}
                     >
                       <div>
@@ -340,7 +340,7 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
                       </div>
                       <div className="text-right">
                         <span className="text-xs text-muted-foreground">Último:</span>
-                        <div className="text-sm font-mono font-bold text-amber-600">
+                        <div className="text-sm font-mono font-bold text-pepsi-600 dark:text-pepsi-300">
                           {m.horimetro_atual}
                           {unidadeMedidor(m)}
                         </div>
@@ -353,8 +353,8 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
 
             {/* Warning if initial differs from last recorded */}
             {temDivergenciaHorimetro && (
-              <div className="p-2.5 rounded-lg bg-amber-500/20 border border-amber-500 text-amber-950 dark:text-amber-200 text-xs flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <div className="p-2.5 rounded-lg bg-prata-300/45 border border-pepsi-600 text-pepsi-950 dark:text-pepsi-200 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-pepsi-600 dark:text-pepsi-300 shrink-0" />
                 <span>
                   Aviso: o {medidor.toLowerCase()} inicial digitado ({hIni}
                   {un}) é diferente do último registro ({ultimoHorimetroRegistrado}
@@ -396,7 +396,7 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
             </div>
 
             {/* Calculated hours card */}
-            <div className="bg-amber-500/15 border-2 border-amber-500/30 rounded-xl p-3 flex items-center justify-between">
+            <div className="bg-prata-300/35 border-2 border-prata-400/60 rounded-xl p-3 flex items-center justify-between">
               <div>
                 <span className="text-[11px] font-bold text-muted-foreground uppercase">
                   {veiculo ? 'Km Rodados' : 'Horas Trabalhadas Calculadas'}
@@ -404,7 +404,7 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
                 <div className="text-xs text-muted-foreground">Final menos inicial</div>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-black text-amber-600 tracking-tight">
+                <div className="text-2xl font-black text-pepsi-600 dark:text-pepsi-300 tracking-tight">
                   {horasCalculadas.toFixed(1).replace('.', ',')}
                   {un}
                 </div>
@@ -442,8 +442,8 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
                     onClick={() => setObraId(isSelected ? '' : o.id)}
                     className={`w-full p-3 rounded-xl border-2 text-left transition-all ${
                       isSelected
-                        ? 'border-amber-500 bg-amber-500/15 font-bold shadow-sm'
-                        : 'border-border bg-card hover:border-amber-500/30'
+                        ? 'border-pepsi-600 bg-prata-300/35 font-bold shadow-sm'
+                        : 'border-border bg-card hover:border-prata-400/60'
                     }`}
                   >
                     <div className="text-sm font-black text-foreground">{o.nome || 'Sem nome'}</div>
@@ -479,7 +479,7 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
                     key={srv.id}
                     className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
                       isChecked
-                        ? 'border-amber-500 bg-amber-500/15 font-bold text-foreground'
+                        ? 'border-pepsi-600 bg-prata-300/35 font-bold text-foreground'
                         : 'border-border bg-card hover:border-muted-foreground/30'
                     }`}
                   >
@@ -521,7 +521,7 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
             {/* Truck trips count if truck */}
             {isCaminhao && (
               <div className="p-3 rounded-xl bg-muted/50 border flex items-center gap-3">
-                <Truck className="w-5 h-5 text-amber-500 shrink-0" />
+                <Truck className="w-5 h-5 text-pepsi-500 shrink-0" />
                 <div className="flex-1">
                   <Label htmlFor="viagens" className="text-xs font-bold">
                     Viagens Realizadas (Caminhão)
@@ -605,7 +605,7 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
         <Button
           type="submit"
           disabled={salvando}
-          className="w-full h-16 text-lg font-black bg-amber-500 hover:bg-amber-600 text-amber-950 shadow-xl rounded-2xl flex items-center justify-center gap-2 uppercase tracking-wide transition-all active:scale-[0.98]"
+          className="w-full h-16 text-lg font-black bg-pepsi-600 hover:bg-pepsi-700 text-white shadow-xl rounded-2xl flex items-center justify-center gap-2 uppercase tracking-wide transition-all active:scale-[0.98]"
         >
           {salvando ? (
             <span>Salvando Apontamento...</span>

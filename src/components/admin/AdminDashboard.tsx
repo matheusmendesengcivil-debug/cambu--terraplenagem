@@ -264,16 +264,16 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Alertas urgentes banner (troca de óleo ou apontamento pendente) */}
       {(alertasOleo.length > 0 || funcionariosSemLancamentoOntem.length > 0) && (
-        <div className="bg-amber-500/15 border-2 border-amber-500/40 rounded-xl p-3.5 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-black text-amber-950 dark:text-amber-200 uppercase tracking-wider">
-            <AlertTriangle className="w-4 h-4 text-amber-600" />
+        <div className="bg-prata-300/35 border-2 border-prata-400/70 rounded-xl p-3.5 space-y-2">
+          <div className="flex items-center gap-2 text-xs font-black text-pepsi-950 dark:text-pepsi-200 uppercase tracking-wider">
+            <AlertTriangle className="w-4 h-4 text-pepsi-600 dark:text-pepsi-300" />
             Alertas Operacionais Pendentes
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
             {alertasOleo.map((al) => (
               <div
                 key={al.maquina.id}
-                className="flex items-center justify-between p-2 rounded-lg bg-card border border-amber-500/30"
+                className="flex items-center justify-between p-2 rounded-lg bg-card border border-prata-400/60"
               >
                 <span className="font-semibold text-foreground">
                   🔧 {al.maquina.tipo} ({al.maquina.modelo})
@@ -283,7 +283,7 @@ export const AdminDashboard: React.FC = () => {
                     Óleo ATRASADO {Math.abs(al.restam).toFixed(0)}h
                   </Badge>
                 ) : (
-                  <Badge className="bg-amber-500 text-amber-950 text-[10px]">
+                  <Badge className="bg-pepsi-600 text-white text-[10px]">
                     Troca em {al.restam.toFixed(0)}h
                   </Badge>
                 )}
@@ -292,7 +292,7 @@ export const AdminDashboard: React.FC = () => {
             {funcionariosSemLancamentoOntem.map((f) => (
               <div
                 key={f.id}
-                className="flex items-center justify-between p-2 rounded-lg bg-card border border-amber-500/30"
+                className="flex items-center justify-between p-2 rounded-lg bg-card border border-prata-400/60"
               >
                 <span className="font-semibold text-foreground">⚠️ {f.nome}</span>
                 <span className="text-[11px] text-muted-foreground">
@@ -307,11 +307,11 @@ export const AdminDashboard: React.FC = () => {
       {/* 8 SUMMARY CARDS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Total horas */}
-        <Card className="border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-transparent">
+        <Card className="border-2 border-prata-400/60 bg-gradient-to-br from-prata-300/25 to-transparent">
           <CardHeader className="p-3.5 pb-1">
             <CardTitle className="text-xs font-bold text-muted-foreground flex items-center justify-between">
               <span>Horas Trabalhadas</span>
-              <Clock className="w-4 h-4 text-amber-500" />
+              <Clock className="w-4 h-4 text-pepsi-500" />
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3.5 pt-0">
@@ -393,11 +393,11 @@ export const AdminDashboard: React.FC = () => {
           <CardHeader className="p-3.5 pb-1">
             <CardTitle className="text-xs font-bold text-muted-foreground flex items-center justify-between">
               <span>Gasto com Combustível</span>
-              <Fuel className="w-4 h-4 text-amber-500" />
+              <Fuel className="w-4 h-4 text-pepsi-500" />
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3.5 pt-0">
-            <div className="text-xl sm:text-2xl font-black text-amber-600 tracking-tight">
+            <div className="text-xl sm:text-2xl font-black text-pepsi-600 dark:text-pepsi-300 tracking-tight">
               {formatCurrency(gastoCombustivel)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">Diesel e insumos</p>
@@ -421,18 +421,18 @@ export const AdminDashboard: React.FC = () => {
         </Card>
 
         {/* Apontamentos pendentes */}
-        <Card className="border-2 border-amber-500 bg-amber-500/10">
+        <Card className="border-2 border-pepsi-600 bg-prata-300/25">
           <CardHeader className="p-3.5 pb-1">
-            <CardTitle className="text-xs font-bold text-amber-950 dark:text-amber-200 flex items-center justify-between">
+            <CardTitle className="text-xs font-bold text-pepsi-950 dark:text-pepsi-200 flex items-center justify-between">
               <span>Pendentes de Aprovação</span>
-              <AlertCircle className="w-4 h-4 text-amber-600" />
+              <AlertCircle className="w-4 h-4 text-pepsi-600 dark:text-pepsi-300" />
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3.5 pt-0">
-            <div className="text-2xl sm:text-3xl font-black text-amber-600 tracking-tight">
+            <div className="text-2xl sm:text-3xl font-black text-pepsi-600 dark:text-pepsi-300 tracking-tight">
               {pendentesAprovacao.length}
             </div>
-            <p className="text-[11px] text-amber-950/80 dark:text-amber-300 mt-0.5 font-bold">
+            <p className="text-[11px] text-pepsi-950/80 dark:text-pepsi-300 mt-0.5 font-bold">
               Aguardando escritório
             </p>
           </CardContent>
@@ -453,7 +453,7 @@ export const AdminDashboard: React.FC = () => {
                 <XAxis dataKey="nome" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} unit="h" />
                 <Tooltip />
-                <Bar dataKey="horas" fill="#d97706" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="horas" fill="#004b93" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -471,7 +471,7 @@ export const AdminDashboard: React.FC = () => {
                 <XAxis dataKey="cliente" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 11 }} unit="h" />
                 <Tooltip />
-                <Bar dataKey="horas" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="horas" fill="#a7afb7" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -500,7 +500,7 @@ export const AdminDashboard: React.FC = () => {
               {horasEConsumoPorMaquina.map((m, idx) => (
                 <tr key={idx} className="hover:bg-muted/40">
                   <td className="p-3 font-bold text-foreground">{m.modelo}</td>
-                  <td className="p-3 text-right font-mono font-bold text-amber-600">{m.horas}h</td>
+                  <td className="p-3 text-right font-mono font-bold text-pepsi-600 dark:text-pepsi-300">{m.horas}h</td>
                   <td className="p-3 text-right font-mono">{m.litros} L</td>
                   <td className="p-3 text-right font-mono font-bold text-foreground">
                     {m.consumoMedio} L/h
@@ -557,7 +557,7 @@ export const AdminDashboard: React.FC = () => {
                       ) : (
                         <Badge
                           variant="outline"
-                          className="border-amber-500 text-amber-600 text-[10px]"
+                          className="border-pepsi-600 text-pepsi-600 dark:text-pepsi-300 text-[10px]"
                         >
                           Em Aberto
                         </Badge>

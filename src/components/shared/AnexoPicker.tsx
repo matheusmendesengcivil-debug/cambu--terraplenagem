@@ -71,11 +71,11 @@ export const AnexoPicker: React.FC<AnexoPickerProps> = ({
           onClick={() => setEscolhendo(true)}
           className="w-full h-12 text-xs font-bold gap-2 border-dashed border-2"
         >
-          <Paperclip className="w-4 h-4 text-amber-500" />
+          <Paperclip className="w-4 h-4 text-pepsi-500" />
           {label}
         </Button>
       ) : (
-        <div className="border-2 border-amber-500/40 rounded-xl p-3 space-y-2 bg-amber-500/5">
+        <div className="border-2 border-prata-400/70 rounded-xl p-3 space-y-2 bg-prata-300/15">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold">O que você quer enviar?</span>
             <button type="button" onClick={() => setEscolhendo(false)}>
@@ -86,7 +86,7 @@ export const AnexoPicker: React.FC<AnexoPickerProps> = ({
             <Button
               type="button"
               onClick={() => fotoRef.current?.click()}
-              className="h-12 bg-amber-500 hover:bg-amber-600 text-amber-950 font-bold gap-2"
+              className="h-12 bg-pepsi-600 hover:bg-pepsi-700 text-white font-bold gap-2"
             >
               <Camera className="w-4 h-4" /> Foto
             </Button>

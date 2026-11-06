@@ -189,14 +189,14 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
         <Card className="border-2 shadow-sm">
           <CardHeader className="p-4 pb-2 border-b bg-muted/40">
             <CardTitle className="text-sm font-bold flex items-center gap-2">
-              <Camera className="w-4 h-4 text-amber-500" />
+              <Camera className="w-4 h-4 text-pepsi-500" />
               Enviar Folha do Dia (Foto ou PDF)
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-4 text-center">
             <div className="border-2 border-dashed border-muted-foreground/30 rounded-2xl p-6 bg-muted/20 flex flex-col items-center justify-center gap-3">
-              <div className="w-16 h-16 rounded-2xl bg-amber-500/20 flex items-center justify-center">
-                <FileText className="w-8 h-8 text-amber-600" />
+              <div className="w-16 h-16 rounded-2xl bg-prata-300/45 flex items-center justify-center">
+                <FileText className="w-8 h-8 text-pepsi-600 dark:text-pepsi-300" />
               </div>
               <div className="text-sm font-bold">Escolha se vai enviar uma foto ou um PDF</div>
               <p className="text-xs text-muted-foreground max-w-xs">
@@ -215,8 +215,8 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
 
       {etapa === 'processando' && (
         <Card className="border-2 p-8 text-center space-y-4">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-500/20 flex items-center justify-center animate-spin">
-            <RefreshCw className="w-8 h-8 text-amber-600" />
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-prata-300/45 flex items-center justify-center animate-spin">
+            <RefreshCw className="w-8 h-8 text-pepsi-600 dark:text-pepsi-300" />
           </div>
           <h3 className="text-lg font-black">Processando imagem da folha...</h3>
           <p className="text-xs text-muted-foreground">
@@ -228,8 +228,8 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
       {etapa === 'conferencia' && (
         <div className="space-y-4">
           {/* Top highlight warning */}
-          <div className="p-3 bg-amber-500/20 border border-amber-500 rounded-xl text-xs text-amber-950 dark:text-amber-200 flex items-start gap-2.5">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="p-3 bg-prata-300/45 border border-pepsi-600 rounded-xl text-xs text-pepsi-950 dark:text-pepsi-200 flex items-start gap-2.5">
+            <AlertTriangle className="w-5 h-5 text-pepsi-600 dark:text-pepsi-300 shrink-0 mt-0.5" />
             <div>
               <p className="font-bold">Tela de Conferência do Apontamento</p>
               <p className="mt-0.5 opacity-90">
@@ -254,7 +254,7 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
               </div>
             </div>
             {!isPdfUrl(fotoUrl) && (
-              <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">
+              <Badge variant="outline" className="text-xs border-pepsi-600 text-pepsi-600 dark:text-pepsi-300">
                 85% confiança
               </Badge>
             )}
@@ -325,7 +325,7 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
               >
                 <div className="flex items-center justify-between mb-1">
                   <Label className="text-xs font-bold">Local / Obra (Casamento Aproximado)</Label>
-                  <span className="text-[10px] text-amber-700 dark:text-amber-300 font-semibold">
+                  <span className="text-[10px] text-pepsi-700 dark:text-pepsi-300 font-semibold">
                     Conferir
                   </span>
                 </div>
@@ -387,7 +387,7 @@ export const FotoFolhaView: React.FC<FotoFolhaViewProps> = ({ onBack, onSuccess 
             <Button
               onClick={() => handleSalvarConferencia(false)}
               disabled={loading}
-              className="w-full h-16 text-base font-black bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-xl gap-2 shadow-lg"
+              className="w-full h-16 text-base font-black bg-pepsi-600 hover:bg-pepsi-700 text-white rounded-xl gap-2 shadow-lg"
             >
               <CheckCircle2 className="w-5 h-5" />
               CONFIRMAR E SALVAR APONTAMENTO
