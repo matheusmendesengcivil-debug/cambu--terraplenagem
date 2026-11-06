@@ -24,6 +24,49 @@ export const isOnline = (): boolean => {
   return typeof navigator !== 'undefined' ? navigator.onLine : true
 }
 
+// Helpers: campos vazios viram null
+const numOrNull = (v: any): number | null => {
+  if (v === null || v === undefined || v === '') return null
+  const n = Number(v)
+  return Number.isFinite(n) ? n : null
+}
+const idOrNull = (v: any): string | null => (v ? String(v) : null)
+
+// Limpa strings vazias de um objeto (para salvar cadastros incompletos)
+const limparVazios = <T extends Record<string, any>>(obj: T): T => {
+  const out: any = {}
+  for (const [k, v] of Object.entries(obj)) {
+    if (k === 'cliente' || k === 'maquina' || k === 'funcionario' || k === 'obra') continue
+    out[k] = v === '' ? null : v
+  }
+  return out
+}
+
+// ARQUIVOS (foto ou PDF) -> Supabase Storage, bucket 'arquivos'
+export const uploadArquivo = async (
+  file: File,
+  pasta = 'geral',
+): Promise<{ url: string; tipo: 'foto' | 'pdf' }> => {
+  const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+  const ext = (file.name.split('.').pop() || (isPdf ? 'pdf' : 'jpg')).toLowerCase()
+  const path = `${pasta}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`
+  const { error } = await supabase.storage
+    .from('arquivos')
+    .upload(path, file, { contentType: file.type || undefined, upsert: false })
+  if (error) throw error
+  const { data } = supabase.storage.from('arquivos').getPublicUrl(path)
+  return { url: data.publicUrl, tipo: isPdf ? 'pdf' : 'foto' }
+}
+
+export const isPdfUrl = (url?: string | null): boolean =>
+  !!url && url.toLowerCase().split('?')[0].endsWith('.pdf')
+
+// LIMPAR TODOS OS DADOS (somente admin)
+export const limparTodosDados = async (): Promise<{ error: any }> => {
+  const { error } = await supabase.rpc('limpar_todos_dados')
+  return { error }
+}
+
 // 1. CLIENTES
 export const getClientes = async (): Promise<Cliente[]> => {
   try {
@@ -45,13 +88,13 @@ export const saveCliente = async (
   if (cliente.id) {
     const { data, error } = await supabase
       .from('clientes')
-      .update({ ...cliente, atualizado_em: new Date().toISOString() })
+      .update({ ...limparVazios(cliente), atualizado_em: new Date().toISOString() })
       .eq('id', cliente.id)
       .select()
       .single()
     return { data, error }
   } else {
-    const { data, error } = await supabase.from('clientes').insert(cliente).select().single()
+    const { data, error } = await supabase.from('clientes').insert(limparVazios(cliente)).select().single()
     return { data, error }
   }
 }
@@ -79,13 +122,13 @@ export const saveObra = async (obra: Partial<Obra>): Promise<{ data: any; error:
   if (obra.id) {
     const { data, error } = await supabase
       .from('obras')
-      .update({ ...obra, atualizado_em: new Date().toISOString() })
+      .update({ ...limparVazios(obra), atualizado_em: new Date().toISOString() })
       .eq('id', obra.id)
       .select()
       .single()
     return { data, error }
   } else {
-    const { data, error } = await supabase.from('obras').insert(obra).select().single()
+    const { data, error } = await supabase.from('obras').insert(limparVazios(obra)).select().single()
     return { data, error }
   }
 }
@@ -111,13 +154,13 @@ export const saveMaquina = async (
   if (maquina.id) {
     const { data, error } = await supabase
       .from('maquinas')
-      .update({ ...maquina, atualizado_em: new Date().toISOString() })
+      .update({ ...limparVazios(maquina), atualizado_em: new Date().toISOString() })
       .eq('id', maquina.id)
       .select()
       .single()
     return { data, error }
   } else {
-    const { data, error } = await supabase.from('maquinas').insert(maquina).select().single()
+    const { data, error } = await supabase.from('maquinas').insert(limparVazios(maquina)).select().single()
     return { data, error }
   }
 }
@@ -143,13 +186,13 @@ export const saveFuncionario = async (
   if (func.id) {
     const { data, error } = await supabase
       .from('funcionarios')
-      .update({ ...func, atualizado_em: new Date().toISOString() })
+      .update({ ...limparVazios(func), atualizado_em: new Date().toISOString() })
       .eq('id', func.id)
       .select()
       .single()
     return { data, error }
   } else {
-    const { data, error } = await supabase.from('funcionarios').insert(func).select().single()
+    const { data, error } = await supabase.from('funcionarios').insert(limparVazios(func)).select().single()
     return { data, error }
   }
 }
@@ -309,6 +352,7 @@ export const saveApontamento = async (
   apontamento: Partial<Apontamento>,
   servicoIds: string[] = [],
   fotosList: string[] = [],
+  opts: { substituirServicos?: boolean } = {},
 ): Promise<{ success: boolean; id: string; offline: boolean; error?: any }> => {
   const isNowOnline = isOnline()
 
@@ -321,17 +365,17 @@ export const saveApontamento = async (
       apontamento.maquina_id,
     )
   }
-  const horas = Number(apontamento.horas_trabalhadas || 0)
-  const valorTotal = valorHora * horas
+  const horas = numOrNull(apontamento.horas_trabalhadas)
+  const valorTotal = valorHora * (horas || 0)
 
   const payload: any = {
-    data: apontamento.data,
-    funcionario_id: apontamento.funcionario_id,
-    maquina_id: apontamento.maquina_id,
-    cliente_id: apontamento.cliente_id,
-    obra_id: apontamento.obra_id,
-    horimetro_inicial: Number(apontamento.horimetro_inicial),
-    horimetro_final: Number(apontamento.horimetro_final),
+    data: apontamento.data || new Date().toISOString().split('T')[0],
+    funcionario_id: idOrNull(apontamento.funcionario_id),
+    maquina_id: idOrNull(apontamento.maquina_id),
+    cliente_id: idOrNull(apontamento.cliente_id),
+    obra_id: idOrNull(apontamento.obra_id),
+    horimetro_inicial: numOrNull(apontamento.horimetro_inicial),
+    horimetro_final: numOrNull(apontamento.horimetro_final),
     horas_trabalhadas: horas,
     horas_paradas: apontamento.horas_paradas ? Number(apontamento.horas_paradas) : 0,
     motivo_parada: apontamento.motivo_parada || null,
@@ -376,8 +420,8 @@ export const saveApontamento = async (
       resultId = data.id
     }
 
-    // Update machine current horimeter
-    if (payload.horimetro_final && payload.maquina_id) {
+    // Update machine current horimeter/km (só em lançamento novo)
+    if (!apontamento.id && payload.horimetro_final && payload.maquina_id) {
       await supabase
         .from('maquinas')
         .update({ horimetro_atual: payload.horimetro_final })
@@ -385,13 +429,13 @@ export const saveApontamento = async (
     }
 
     // Save services links
-    if (servicoIds.length > 0 && resultId) {
+    if ((servicoIds.length > 0 || opts.substituirServicos) && resultId) {
       await supabase.from('apontamento_servicos').delete().eq('apontamento_id', resultId)
       const servicoRows = servicoIds.map((sId) => ({
         apontamento_id: resultId,
         tipo_servico_id: sId,
       }))
-      await supabase.from('apontamento_servicos').insert(servicoRows)
+      if (servicoRows.length > 0) await supabase.from('apontamento_servicos').insert(servicoRows)
     }
 
     // Save photos
@@ -399,6 +443,7 @@ export const saveApontamento = async (
       const fotoRows = fotosList.map((url) => ({
         apontamento_id: resultId,
         url,
+        tipo_arquivo: isPdfUrl(url) ? 'pdf' : 'foto',
       }))
       await supabase.from('fotos').insert(fotoRows)
     }
@@ -414,6 +459,13 @@ export const saveApontamento = async (
     })
     return { success: true, id: offlineId, offline: true, error: err }
   }
+}
+
+export const deleteApontamento = async (id: string): Promise<{ error: any }> => {
+  await supabase.from('apontamento_servicos').delete().eq('apontamento_id', id)
+  await supabase.from('fotos').delete().eq('apontamento_id', id)
+  const { error } = await supabase.from('apontamentos').delete().eq('id', id)
+  return { error }
 }
 
 export const updateApontamentoStatus = async (
@@ -455,15 +507,15 @@ export const saveAbastecimento = async (
 ): Promise<{ success: boolean; id: string; offline: boolean; error?: any }> => {
   const isNowOnline = isOnline()
   const payload = {
-    data: abast.data,
-    maquina_id: abast.maquina_id,
-    funcionario_id: abast.funcionario_id,
-    horimetro_momento: Number(abast.horimetro_momento),
+    data: abast.data || new Date().toISOString().split('T')[0],
+    maquina_id: idOrNull(abast.maquina_id),
+    funcionario_id: idOrNull(abast.funcionario_id),
+    horimetro_momento: numOrNull(abast.horimetro_momento),
     tipo_combustivel: abast.tipo_combustivel || 'diesel',
-    litros: Number(abast.litros),
-    valor_por_litro: abast.valor_por_litro ? Number(abast.valor_por_litro) : null,
-    valor_total: Number(abast.valor_total),
-    posto_local: abast.posto_local || null,
+    litros: numOrNull(abast.litros),
+    valor_por_litro: numOrNull(abast.valor_por_litro),
+    valor_total: numOrNull(abast.valor_total),
+    posto_local: abast.posto_local || 'Garagem',
     foto_cupom_url: abast.foto_cupom_url || null,
   }
 
@@ -506,11 +558,11 @@ export const saveManutencao = async (
 ): Promise<{ success: boolean; id: string; offline: boolean; error?: any }> => {
   const isNowOnline = isOnline()
   const payload = {
-    data: manut.data,
-    maquina_id: manut.maquina_id,
-    horimetro: Number(manut.horimetro),
-    tipo: manut.tipo,
-    descricao: manut.descricao,
+    data: manut.data || new Date().toISOString().split('T')[0],
+    maquina_id: idOrNull(manut.maquina_id),
+    horimetro: numOrNull(manut.horimetro),
+    tipo: manut.tipo || null,
+    descricao: manut.descricao || null,
     custo: Number(manut.custo || 0),
     oficina_responsavel: manut.oficina_responsavel || null,
     fotos: manut.fotos || [],
@@ -678,6 +730,7 @@ export const syncOfflineQueue = async (): Promise<{ syncedCount: number; errors:
           const fRows = fotos_list.map((u: string) => ({
             apontamento_id: data.id,
             url: u,
+            tipo_arquivo: isPdfUrl(u) ? 'pdf' : 'foto',
           }))
           await supabase.from('fotos').insert(fRows)
         }

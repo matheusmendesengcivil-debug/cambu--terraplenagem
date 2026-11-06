@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Fuel, ArrowLeft, Camera, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Fuel, ArrowLeft, CheckCircle2, Edit2, Home } from 'lucide-react'
 import {
   getMaquinas,
   getFuncionarios,
@@ -12,7 +12,8 @@ import {
   getAbastecimentos,
 } from '@/services/cambui'
 import { Maquina, Funcionario, Abastecimento } from '@/types/cambui'
-import { formatDateBR } from '@/lib/formatters'
+import { isVeiculo, nomeEquipamento } from '@/lib/formatters'
+import { AnexoPicker, AnexoThumb } from '@/components/shared/AnexoPicker'
 import { toast } from 'sonner'
 
 interface AbastecimentoFormProps {
@@ -30,12 +31,10 @@ export const AbastecimentoForm: React.FC<AbastecimentoFormProps> = ({ onBack, on
 
   const [maquinaId, setMaquinaId] = useState('')
   const [funcionarioId, setFuncionarioId] = useState('')
-  const [horimetroMomento, setHorimetroMomento] = useState('')
   const [tipoCombustivel, setTipoCombustivel] = useState<'diesel' | 'gasolina' | 'ARLA'>('diesel')
   const [litros, setLitros] = useState('')
-  const [valorPorLitro, setValorPorLitro] = useState('5.99')
-  const [valorTotal, setValorTotal] = useState('')
-  const [postoLocal, setPostoLocal] = useState('Posto Parceiro Cambuí')
+  const [postoLocal, setPostoLocal] = useState('Garagem')
+  const [editandoLocal, setEditandoLocal] = useState(false)
   const [fotoCupom, setFotoCupom] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
 
@@ -44,77 +43,25 @@ export const AbastecimentoForm: React.FC<AbastecimentoFormProps> = ({ onBack, on
       const [m, f] = await Promise.all([getMaquinas(), getFuncionarios()])
       setMaquinas(m)
       setFuncionarios(f)
-      if (m.length > 0) {
-        setMaquinaId(m[0].id)
-        setHorimetroMomento(m[0].horimetro_atual.toString())
-      }
-      if (f.length > 0) {
-        const found = f.find((func) => func.usuario_id === user?.id)
-        setFuncionarioId(found ? found.id : f[0].id)
-      }
+      const found = f.find((func) => func.usuario_id === user?.id)
+      if (found) setFuncionarioId(found.id)
     }
     init()
   }, [user])
 
-  // Handle auto-calc of total or per-liter
-  const handleLitrosChange = (val: string) => {
-    setLitros(val)
-    const l = parseFloat(val) || 0
-    const vpl = parseFloat(valorPorLitro) || 0
-    if (l > 0 && vpl > 0) {
-      setValorTotal((l * vpl).toFixed(2))
-    }
-  }
-
-  const handleValorPorLitroChange = (val: string) => {
-    setValorPorLitro(val)
-    const l = parseFloat(litros) || 0
-    const vpl = parseFloat(val) || 0
-    if (l > 0 && vpl > 0) {
-      setValorTotal((l * vpl).toFixed(2))
-    }
-  }
-
-  const handleValorTotalChange = (val: string) => {
-    setValorTotal(val)
-    const tot = parseFloat(val) || 0
-    const l = parseFloat(litros) || 0
-    if (tot > 0 && l > 0) {
-      setValorPorLitro((tot / l).toFixed(3))
-    }
-  }
-
-  const handleSelectMaquina = (mId: string) => {
-    setMaquinaId(mId)
-    const m = maquinas.find((x) => x.id === mId)
-    if (m) {
-      setHorimetroMomento(m.horimetro_atual.toString())
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const l = parseFloat(litros) || 0
-    const vt = parseFloat(valorTotal) || 0
-    const hor = parseFloat(horimetroMomento) || 0
-
-    if (!maquinaId || l <= 0 || vt <= 0 || hor <= 0) {
-      toast.error('Preencha os campos obrigatórios (máquina, horímetro, litros e valor).')
-      return
-    }
+    const l = litros === '' ? null : parseFloat(litros)
 
     setSalvando(true)
     try {
       const res = await saveAbastecimento({
         data,
-        maquina_id: maquinaId,
-        funcionario_id: funcionarioId || (funcionarios[0]?.id ?? ''),
-        horimetro_momento: hor,
+        maquina_id: maquinaId || null,
+        funcionario_id: funcionarioId || null,
         tipo_combustivel: tipoCombustivel,
         litros: l,
-        valor_por_litro: parseFloat(valorPorLitro) || null,
-        valor_total: vt,
-        posto_local: postoLocal,
+        posto_local: postoLocal.trim() || 'Garagem',
         foto_cupom_url: fotoCupom,
       })
 
@@ -151,7 +98,7 @@ export const AbastecimentoForm: React.FC<AbastecimentoFormProps> = ({ onBack, on
         <Card className="border-2 shadow-sm">
           <CardHeader className="p-3.5 pb-2 border-b bg-amber-500/10">
             <CardTitle className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200 flex items-center justify-between">
-              <span>Máquina & Combustível</span>
+              <span>Máquina / Veículo & Combustível</span>
               <Fuel className="w-4 h-4 text-amber-500" />
             </CardTitle>
           </CardHeader>
@@ -164,7 +111,6 @@ export const AbastecimentoForm: React.FC<AbastecimentoFormProps> = ({ onBack, on
                   value={data}
                   onChange={(e) => setData(e.target.value)}
                   className="h-11 text-xs mt-1"
-                  required
                 />
               </div>
 
@@ -183,98 +129,91 @@ export const AbastecimentoForm: React.FC<AbastecimentoFormProps> = ({ onBack, on
             </div>
 
             <div>
-              <Label className="text-xs font-bold">Máquina Abastecida</Label>
+              <Label className="text-xs font-bold">Máquina / Veículo Abastecido</Label>
               <select
                 value={maquinaId}
-                onChange={(e) => handleSelectMaquina(e.target.value)}
+                onChange={(e) => setMaquinaId(e.target.value)}
                 className="w-full h-12 text-sm font-bold rounded-md border border-input bg-background px-3 mt-1"
-                required
               >
+                <option value="">— Não informado —</option>
                 {maquinas.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.tipo} - {m.modelo} ({m.placa_identificacao})
+                    {isVeiculo(m) ? '🚚 ' : '🚜 '}
+                    {nomeEquipamento(m)}
+                    {m.placa_identificacao ? ` (${m.placa_identificacao})` : ''}
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <Label className="text-xs font-bold">Horímetro no Momento do Abastecimento</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={horimetroMomento}
-                onChange={(e) => setHorimetroMomento(e.target.value)}
-                placeholder="Ex: 1845.5"
-                className="h-12 font-mono text-base font-bold mt-1"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs font-bold">Litros Abastecidos *</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={litros}
-                  onChange={(e) => handleLitrosChange(e.target.value)}
-                  placeholder="Ex: 180"
-                  className="h-12 text-base font-bold mt-1"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label className="text-xs font-bold">Valor por Litro (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.001"
-                  value={valorPorLitro}
-                  onChange={(e) => handleValorPorLitroChange(e.target.value)}
-                  placeholder="5.99"
-                  className="h-12 text-sm mt-1"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xs font-bold">Valor Total Pago / Nota (R$) *</Label>
+              <Label className="text-xs font-bold">Litros Abastecidos</Label>
               <Input
                 type="number"
                 step="0.01"
-                value={valorTotal}
-                onChange={(e) => handleValorTotalChange(e.target.value)}
-                placeholder="Ex: 1078.20"
+                inputMode="decimal"
+                value={litros}
+                onChange={(e) => setLitros(e.target.value)}
+                placeholder="Ex: 180"
                 className="h-14 text-xl font-mono font-black text-amber-600 mt-1"
-                required
               />
             </div>
 
             <div>
-              <Label className="text-xs font-bold">Posto ou Comboio</Label>
-              <Input
-                value={postoLocal}
-                onChange={(e) => setPostoLocal(e.target.value)}
-                placeholder="Ex: Posto Petrobras Fernão Dias ou Comboio de campo"
-                className="h-11 text-xs mt-1"
-              />
+              <Label className="text-xs font-bold">Local do Abastecimento</Label>
+              {editandoLocal ? (
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    autoFocus
+                    value={postoLocal}
+                    onChange={(e) => setPostoLocal(e.target.value)}
+                    placeholder="Ex: Posto Petrobras, comboio..."
+                    className="h-11 text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setPostoLocal('Garagem')
+                      setEditandoLocal(false)
+                    }}
+                    className="h-11 text-xs shrink-0 gap-1"
+                  >
+                    <Home className="w-3.5 h-3.5" /> Garagem
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between h-11 mt-1 px-3 rounded-md border bg-muted/40">
+                  <span className="text-sm font-bold">{postoLocal}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditandoLocal(true)}
+                    className="h-8 text-xs gap-1"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" /> Editar
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div>
-              <Label className="text-xs font-bold">Foto do Cupom / Nota (Opcional)</Label>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setFotoCupom('https://img.usecurling.com/p/600/800?q=fuel%20receipt&color=white')
-                  toast.success('Cupom fiscal anexado!')
-                }}
-                className="w-full h-11 text-xs font-bold gap-2 border-dashed mt-1"
-              >
-                <Camera className="w-4 h-4 text-amber-500" />
-                {fotoCupom ? 'Foto do Cupom Anexada' : 'Tirar Foto do Cupom / Nota'}
-              </Button>
+              <Label className="text-xs font-bold">Cupom / Nota (Opcional)</Label>
+              <div className="mt-1 space-y-2">
+                {fotoCupom ? (
+                  <div className="flex items-center gap-2">
+                    <AnexoThumb url={fotoCupom} onRemove={() => setFotoCupom(null)} />
+                    <span className="text-xs text-muted-foreground">Cupom anexado</span>
+                  </div>
+                ) : (
+                  <AnexoPicker
+                    pasta="abastecimentos"
+                    label="Anexar foto ou PDF do cupom"
+                    onUploaded={(url) => setFotoCupom(url)}
+                  />
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

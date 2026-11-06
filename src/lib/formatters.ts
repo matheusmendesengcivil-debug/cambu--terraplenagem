@@ -33,3 +33,21 @@ export function formatHoursShort(hours?: number | null): string {
   if (hours === undefined || hours === null || isNaN(hours)) return '0,0h'
   return `${hours.toFixed(1).replace('.', ',')}h`
 }
+
+// Máquina usa horímetro (h); veículo usa quilometragem (km)
+export const isVeiculo = (m?: { categoria?: string | null } | null): boolean =>
+  m?.categoria === 'veiculo'
+
+export const unidadeMedidor = (m?: { categoria?: string | null } | null): 'km' | 'h' =>
+  isVeiculo(m) ? 'km' : 'h'
+
+export const nomeMedidor = (m?: { categoria?: string | null } | null): string =>
+  isVeiculo(m) ? 'Km (hodômetro)' : 'Horímetro'
+
+export const nomeEquipamento = (
+  m?: { tipo?: string | null; modelo?: string | null; placa_identificacao?: string | null } | null,
+): string => {
+  if (!m) return 'Sem máquina/veículo'
+  const base = [m.tipo, m.modelo].filter(Boolean).join(' - ')
+  return base || m.placa_identificacao || 'Sem nome'
+}

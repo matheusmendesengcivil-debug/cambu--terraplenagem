@@ -138,7 +138,7 @@ export const AdminDashboard: React.FC = () => {
       .filter((a) => a.funcionario_id === f.id)
       .reduce((acc, a) => acc + Number(a.horas_trabalhadas || 0), 0)
     return {
-      nome: f.nome.split(' ')[0],
+      nome: (f.nome || 'Sem nome').split(' ')[0],
       horas: Number(total.toFixed(1)),
     }
   })
@@ -149,7 +149,7 @@ export const AdminDashboard: React.FC = () => {
       .filter((a) => a.cliente_id === c.id)
       .reduce((acc, a) => acc + Number(a.horas_trabalhadas || 0), 0)
     return {
-      cliente: c.nome.length > 15 ? c.nome.substring(0, 15) + '...' : c.nome,
+      cliente: (c.nome || 'Sem nome').length > 15 ? (c.nome || '').substring(0, 15) + '...' : c.nome || 'Sem nome',
       horas: Number(total.toFixed(1)),
     }
   })

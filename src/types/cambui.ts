@@ -13,16 +13,16 @@ export interface Usuario {
 export interface Funcionario {
   id: string
   usuario_id?: string | null
-  nome: string
+  nome: string | null
   telefone?: string | null
-  funcao: string
+  funcao: string | null
   valor_hora?: number | null
   ativo: boolean
 }
 
 export interface Cliente {
   id: string
-  nome: string
+  nome: string | null
   cpf_cnpj?: string | null
   telefone?: string | null
   whatsapp?: string | null
@@ -34,8 +34,8 @@ export interface Cliente {
 
 export interface Obra {
   id: string
-  cliente_id: string
-  nome: string
+  cliente_id: string | null
+  nome: string | null
   endereco?: string | null
   latitude?: number | null
   longitude?: number | null
@@ -44,11 +44,14 @@ export interface Obra {
   cliente?: Cliente
 }
 
+export type CategoriaMaquina = 'maquina' | 'veiculo'
+
 export interface Maquina {
   id: string
-  tipo: string
-  modelo: string
-  placa_identificacao: string
+  categoria?: CategoriaMaquina
+  tipo: string | null
+  modelo: string | null
+  placa_identificacao: string | null
   horimetro_atual: number
   valor_hora_padrao: number
   intervalo_troca_oleo: number
@@ -73,13 +76,13 @@ export interface PrecoCliente {
 export interface Apontamento {
   id: string
   data: string
-  funcionario_id: string
-  maquina_id: string
-  cliente_id: string
-  obra_id: string
-  horimetro_inicial: number
-  horimetro_final: number
-  horas_trabalhadas: number
+  funcionario_id: string | null
+  maquina_id: string | null
+  cliente_id: string | null
+  obra_id: string | null
+  horimetro_inicial: number | null
+  horimetro_final: number | null
+  horas_trabalhadas: number | null
   horas_paradas?: number | null
   motivo_parada?: string | null
   quantidade_viagens?: number | null
@@ -112,18 +115,19 @@ export interface Foto {
   manutencao_id?: string | null
   url: string
   legenda?: string | null
+  tipo_arquivo?: 'foto' | 'pdf'
 }
 
 export interface Abastecimento {
   id: string
   data: string
-  maquina_id: string
-  funcionario_id: string
-  horimetro_momento: number
+  maquina_id: string | null
+  funcionario_id: string | null
+  horimetro_momento?: number | null
   tipo_combustivel: 'diesel' | 'gasolina' | 'ARLA'
-  litros: number
+  litros: number | null
   valor_por_litro?: number | null
-  valor_total: number
+  valor_total?: number | null
   posto_local?: string | null
   foto_cupom_url?: string | null
   criado_por?: string | null
