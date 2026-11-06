@@ -10,7 +10,7 @@
 @layer base {
   :root {
     /* Cambuí Terraplenagem - Construction Theme: Amber/Orange + Dark Slate */
-    --background: 210 20% 97%;
+    --background: 213 30% 98%;
     --foreground: 215 30% 10%;
 
     --card: 0 0% 100%;
@@ -23,20 +23,20 @@
     --primary: 211 100% 29%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 12% 90%;
+    --secondary: 213 25% 94%;
     --secondary-foreground: 215 25% 15%;
 
-    --muted: 210 14% 93%;
+    --muted: 213 25% 95%;
     --muted-foreground: 215 10% 40%;
 
-    --accent: 210 14% 90%;
+    --accent: 213 28% 93%;
     --accent-foreground: 211 100% 22%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 210 10% 82%;
-    --input: 210 10% 82%;
+    --border: 213 20% 87%;
+    --input: 213 20% 87%;
     --ring: 211 100% 29%;
 
     --radius: 0.75rem;

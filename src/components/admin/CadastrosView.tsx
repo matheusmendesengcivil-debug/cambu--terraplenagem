@@ -30,7 +30,7 @@ import {
   saveMaquina,
   getTiposServico,
   saveTipoServico,
-  limparTodosDados,
+  excluirCadastro,
 } from '@/services/cambui'
 import { Cliente, Obra, Funcionario, Maquina, TipoServico } from '@/types/cambui'
 import { formatCurrency, nomeEquipamento } from '@/lib/formatters'
@@ -54,9 +54,6 @@ export const CadastrosView: React.FC = () => {
   const [modalMaquina, setModalMaquina] = useState<Partial<Maquina> | null>(null)
   const [modalFuncionario, setModalFuncionario] = useState<Partial<Funcionario> | null>(null)
   const [novoServicoNome, setNovoServicoNome] = useState('')
-  const [modalLimpar, setModalLimpar] = useState(false)
-  const [textoConfirmacao, setTextoConfirmacao] = useState('')
-  const [limpando, setLimpando] = useState(false)
 
   const listaMaquinas = maquinas.filter((m) => (m.categoria || 'maquina') === 'maquina')
   const listaVeiculos = maquinas.filter((m) => m.categoria === 'veiculo')
@@ -187,24 +184,24 @@ export const CadastrosView: React.FC = () => {
     }
   }
 
-  const handleLimparTudo = async () => {
-    if (textoConfirmacao.trim().toUpperCase() !== 'EXCLUIR') {
-      toast.error('Digite EXCLUIR para confirmar.')
+  const handleExcluir = async (
+    tabela: 'clientes' | 'obras' | 'maquinas' | 'funcionarios' | 'tipos_servico',
+    id: string,
+    nome: string,
+  ) => {
+    if (
+      !window.confirm(
+        `Excluir "${nome}"?\n\nOs lançamentos ligados a ele continuam salvos, só ficam com esse campo em branco.`,
+      )
+    )
+      return
+    const { error } = await excluirCadastro(tabela, id)
+    if (error) {
+      toast.error('Erro ao excluir: ' + error.message)
       return
     }
-    setLimpando(true)
-    try {
-      const { error } = await limparTodosDados()
-      if (error) throw error
-      toast.success('Todos os dados foram excluídos.')
-      setModalLimpar(false)
-      setTextoConfirmacao('')
-      await carregarTudo()
-    } catch (err: any) {
-      toast.error('Erro ao excluir dados: ' + (err?.message || 'tente novamente'))
-    } finally {
-      setLimpando(false)
-    }
+    toast.success('Excluído com sucesso.')
+    await carregarTudo()
   }
 
   return (
@@ -270,7 +267,7 @@ export const CadastrosView: React.FC = () => {
             <Button
               size="sm"
               onClick={() => setModalCliente({ ativo: true })}
-              className="bg-amber-500 hover:bg-amber-600 text-amber-950 font-bold text-xs h-9 gap-1"
+              className="bg-pepsi-600 hover:bg-pepsi-700 text-white font-bold text-xs h-9 gap-1"
             >
               <Plus className="w-4 h-4" /> Novo Cliente
             </Button>
@@ -317,6 +314,14 @@ export const CadastrosView: React.FC = () => {
                     >
                       <Edit2 className="w-3.5 h-3.5" /> Editar
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleExcluir('clientes', c.id, c.nome || 'cliente sem nome')}
+                      className="text-xs h-8 gap-1 font-semibold text-destructive"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Excluir
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -335,7 +340,7 @@ export const CadastrosView: React.FC = () => {
             <Button
               size="sm"
               onClick={() => setModalObra({ status: 'em_andamento', cliente_id: clientes[0]?.id })}
-              className="bg-amber-500 hover:bg-amber-600 text-amber-950 font-bold text-xs h-9 gap-1"
+              className="bg-pepsi-600 hover:bg-pepsi-700 text-white font-bold text-xs h-9 gap-1"
             >
               <Plus className="w-4 h-4" /> Nova Obra
             </Button>
@@ -349,17 +354,15 @@ export const CadastrosView: React.FC = () => {
                   <CardContent className="p-4 space-y-2">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="font-bold text-sm text-foreground">
-                          {o.nome || 'Sem nome'}
-                        </h3>
-                        <p className="text-xs font-semibold text-amber-600">
+                        <h3 className="font-bold text-sm text-foreground">{o.nome || 'Sem nome'}</h3>
+                        <p className="text-xs font-semibold text-pepsi-600 dark:text-pepsi-300">
                           Cliente: {cli?.nome || 'Não definido'}
                         </p>
                       </div>
                       <Badge
                         className={
                           o.status === 'em_andamento'
-                            ? 'bg-amber-500 text-amber-950 text-[10px]'
+                            ? 'bg-pepsi-600 text-white text-[10px]'
                             : 'text-[10px]'
                         }
                       >
@@ -371,7 +374,7 @@ export const CadastrosView: React.FC = () => {
                       <div>📍 {o.endereco || 'Endereço não informado'}</div>
                       {o.latitude && o.longitude && (
                         <div className="font-mono text-[11px] text-foreground flex items-center gap-1">
-                          <Navigation className="w-3 h-3 text-amber-500" />
+                          <Navigation className="w-3 h-3 text-pepsi-500" />
                           GPS: {o.latitude.toString().substring(0, 9)},{' '}
                           {o.longitude.toString().substring(0, 9)}
                         </div>
@@ -386,6 +389,14 @@ export const CadastrosView: React.FC = () => {
                         className="text-xs h-8 gap-1 font-semibold"
                       >
                         <Edit2 className="w-3.5 h-3.5" /> Editar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleExcluir('obras', o.id, o.nome || 'obra sem nome')}
+                        className="text-xs h-8 gap-1 font-semibold text-destructive"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Excluir
                       </Button>
                     </div>
                   </CardContent>
@@ -416,7 +427,7 @@ export const CadastrosView: React.FC = () => {
                   valor_hora_padrao: 0,
                 })
               }
-              className="bg-amber-500 hover:bg-amber-600 text-amber-950 font-bold text-xs h-9 gap-1"
+              className="bg-pepsi-600 hover:bg-pepsi-700 text-white font-bold text-xs h-9 gap-1"
             >
               <Plus className="w-4 h-4" /> {secao === 'veiculos' ? 'Novo Veículo' : 'Nova Máquina'}
             </Button>
@@ -432,9 +443,9 @@ export const CadastrosView: React.FC = () => {
                       <div>
                         <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5">
                           {m.categoria === 'veiculo' ? (
-                            <Car className="w-4 h-4 text-amber-500" />
+                            <Car className="w-4 h-4 text-pepsi-500" />
                           ) : (
-                            <HardHat className="w-4 h-4 text-amber-500" />
+                            <HardHat className="w-4 h-4 text-pepsi-500" />
                           )}
                           {nomeEquipamento(m)}
                         </h3>
@@ -457,7 +468,7 @@ export const CadastrosView: React.FC = () => {
                       </div>
                       <div>
                         <span className="text-muted-foreground">Valor Cobrado / Hora:</span>
-                        <div className="font-bold font-mono text-amber-600 text-sm">
+                        <div className="font-bold font-mono text-pepsi-600 dark:text-pepsi-300 text-sm">
                           {formatCurrency(m.valor_hora_padrao)}
                         </div>
                       </div>
@@ -486,6 +497,14 @@ export const CadastrosView: React.FC = () => {
                       >
                         <Edit2 className="w-3.5 h-3.5" /> Editar
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleExcluir('maquinas', m.id, nomeEquipamento(m))}
+                        className="text-xs h-8 gap-1 font-semibold text-destructive"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Excluir
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -505,7 +524,7 @@ export const CadastrosView: React.FC = () => {
             <Button
               size="sm"
               onClick={() => setModalFuncionario({ ativo: true, valor_hora: 35 })}
-              className="bg-amber-500 hover:bg-amber-600 text-amber-950 font-bold text-xs h-9 gap-1"
+              className="bg-pepsi-600 hover:bg-pepsi-700 text-white font-bold text-xs h-9 gap-1"
             >
               <Plus className="w-4 h-4" /> Novo Colaborador
             </Button>
@@ -518,7 +537,7 @@ export const CadastrosView: React.FC = () => {
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-bold text-sm text-foreground">{f.nome || 'Sem nome'}</h3>
-                      <p className="text-xs text-amber-600 font-semibold">{f.funcao}</p>
+                      <p className="text-xs text-pepsi-600 dark:text-pepsi-300 font-semibold">{f.funcao}</p>
                     </div>
                     <Badge
                       variant={f.ativo ? 'default' : 'secondary'}
@@ -541,6 +560,14 @@ export const CadastrosView: React.FC = () => {
                       className="text-xs h-8 gap-1 font-semibold"
                     >
                       <Edit2 className="w-3.5 h-3.5" /> Editar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleExcluir('funcionarios', f.id, f.nome || 'colaborador sem nome')}
+                      className="text-xs h-8 gap-1 font-semibold text-destructive"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Excluir
                     </Button>
                   </div>
                 </CardContent>
@@ -566,7 +593,7 @@ export const CadastrosView: React.FC = () => {
               />
               <Button
                 onClick={handleAddTipoServico}
-                className="bg-amber-500 hover:bg-amber-600 text-amber-950 font-bold text-xs h-10 shrink-0"
+                className="bg-pepsi-600 hover:bg-pepsi-700 text-white font-bold text-xs h-10 shrink-0"
               >
                 Adicionar
               </Button>
@@ -579,7 +606,14 @@ export const CadastrosView: React.FC = () => {
                   className="p-2.5 rounded-lg border bg-muted/30 flex items-center justify-between text-xs font-semibold"
                 >
                   <span>{srv.nome}</span>
-                  <Check className="w-4 h-4 text-emerald-600" />
+                  <button
+                    type="button"
+                    title="Excluir serviço"
+                    onClick={() => handleExcluir('tipos_servico', srv.id, srv.nome)}
+                    className="text-destructive hover:opacity-70"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               ))}
             </div>
@@ -640,7 +674,7 @@ export const CadastrosView: React.FC = () => {
               >
                 Cancelar
               </Button>
-              <Button type="submit" size="sm" className="bg-amber-500 text-amber-950 font-bold">
+              <Button type="submit" size="sm" className="bg-pepsi-600 text-white font-bold">
                 Salvar Cliente
               </Button>
             </div>
@@ -701,7 +735,7 @@ export const CadastrosView: React.FC = () => {
                   onClick={handlePegarGPS}
                   className="h-7 text-[11px] gap-1"
                 >
-                  <Navigation className="w-3 h-3 text-amber-500" /> Pegar GPS Atual
+                  <Navigation className="w-3 h-3 text-pepsi-500" /> Pegar GPS Atual
                 </Button>
               </div>
               <div className="grid grid-cols-2 gap-2 mt-1">
@@ -731,7 +765,7 @@ export const CadastrosView: React.FC = () => {
               <Button type="button" variant="outline" size="sm" onClick={() => setModalObra(null)}>
                 Cancelar
               </Button>
-              <Button type="submit" size="sm" className="bg-amber-500 text-amber-950 font-bold">
+              <Button type="submit" size="sm" className="bg-pepsi-600 text-white font-bold">
                 Salvar Obra
               </Button>
             </div>
@@ -765,7 +799,7 @@ export const CadastrosView: React.FC = () => {
                     onClick={() => setModalMaquina({ ...modalMaquina, categoria: c })}
                     className={`h-10 rounded-lg border-2 text-xs font-bold ${
                       (modalMaquina.categoria || 'maquina') === c
-                        ? 'border-amber-500 bg-amber-500/15'
+                        ? 'border-pepsi-600 bg-prata-300/35'
                         : 'border-border'
                     }`}
                   >
@@ -778,9 +812,7 @@ export const CadastrosView: React.FC = () => {
               <div>
                 <Label className="text-xs font-bold">Tipo</Label>
                 <Input
-                  placeholder={
-                    ehVeiculoModal ? 'Caminhão, Caçamba, Carro...' : 'Escavadeira, Retro...'
-                  }
+                  placeholder={ehVeiculoModal ? 'Caminhão, Caçamba, Carro...' : 'Escavadeira, Retro...'}
                   value={modalMaquina.tipo || ''}
                   onChange={(e) => setModalMaquina({ ...modalMaquina, tipo: e.target.value })}
                   className="h-10 text-xs mt-1"
@@ -868,7 +900,7 @@ export const CadastrosView: React.FC = () => {
               >
                 Cancelar
               </Button>
-              <Button type="submit" size="sm" className="bg-amber-500 text-amber-950 font-bold">
+              <Button type="submit" size="sm" className="bg-pepsi-600 text-white font-bold">
                 {ehVeiculoModal ? 'Salvar Veículo' : 'Salvar Máquina'}
               </Button>
             </div>
@@ -941,73 +973,11 @@ export const CadastrosView: React.FC = () => {
               >
                 Cancelar
               </Button>
-              <Button type="submit" size="sm" className="bg-amber-500 text-amber-950 font-bold">
+              <Button type="submit" size="sm" className="bg-pepsi-600 text-white font-bold">
                 Salvar Colaborador
               </Button>
             </div>
           </form>
-        </div>
-      )}
-      {/* ZONA DE PERIGO */}
-      <Card className="border-2 border-red-500/40 mt-8">
-        <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-black text-red-600 flex items-center gap-1.5">
-              <AlertTriangle className="w-4 h-4" /> Excluir todos os dados
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Apaga clientes, obras, máquinas, veículos, equipe sem login, lançamentos,
-              abastecimentos, manutenções e cobranças. Os usuários de login e os tipos de serviço
-              são mantidos.
-            </p>
-          </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setModalLimpar(true)}
-            className="font-bold text-xs gap-1 shrink-0"
-          >
-            <Trash2 className="w-4 h-4" /> Excluir tudo
-          </Button>
-        </CardContent>
-      </Card>
-
-      {modalLimpar && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-card border-2 border-red-500 rounded-2xl p-5 max-w-md w-full space-y-3 shadow-2xl">
-            <h3 className="text-base font-black text-red-600">Excluir TODOS os dados?</h3>
-            <p className="text-xs text-muted-foreground">
-              Essa ação não pode ser desfeita. Para confirmar, digite <b>EXCLUIR</b> abaixo.
-            </p>
-            <Input
-              value={textoConfirmacao}
-              onChange={(e) => setTextoConfirmacao(e.target.value)}
-              placeholder="EXCLUIR"
-              className="h-10 text-sm font-bold"
-            />
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setModalLimpar(false)
-                  setTextoConfirmacao('')
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={limpando}
-                onClick={handleLimparTudo}
-                className="font-bold"
-              >
-                {limpando ? 'Excluindo...' : 'Excluir tudo'}
-              </Button>
-            </div>
-          </div>
         </div>
       )}
     </div>

@@ -61,9 +61,13 @@ export const uploadArquivo = async (
 export const isPdfUrl = (url?: string | null): boolean =>
   !!url && url.toLowerCase().split('?')[0].endsWith('.pdf')
 
-// LIMPAR TODOS OS DADOS (somente admin)
-export const limparTodosDados = async (): Promise<{ error: any }> => {
-  const { error } = await supabase.rpc('limpar_todos_dados')
+// EXCLUIR UM ITEM DE CADASTRO (somente admin)
+// Lançamentos ligados ao item são mantidos, só ficam com o campo em branco.
+export const excluirCadastro = async (
+  tabela: 'clientes' | 'obras' | 'maquinas' | 'funcionarios' | 'tipos_servico',
+  id: string,
+): Promise<{ error: any }> => {
+  const { error } = await supabase.from(tabela).delete().eq('id', id)
   return { error }
 }
 
@@ -94,11 +98,7 @@ export const saveCliente = async (
       .single()
     return { data, error }
   } else {
-    const { data, error } = await supabase
-      .from('clientes')
-      .insert(limparVazios(cliente))
-      .select()
-      .single()
+    const { data, error } = await supabase.from('clientes').insert(limparVazios(cliente)).select().single()
     return { data, error }
   }
 }
@@ -132,11 +132,7 @@ export const saveObra = async (obra: Partial<Obra>): Promise<{ data: any; error:
       .single()
     return { data, error }
   } else {
-    const { data, error } = await supabase
-      .from('obras')
-      .insert(limparVazios(obra))
-      .select()
-      .single()
+    const { data, error } = await supabase.from('obras').insert(limparVazios(obra)).select().single()
     return { data, error }
   }
 }
@@ -168,11 +164,7 @@ export const saveMaquina = async (
       .single()
     return { data, error }
   } else {
-    const { data, error } = await supabase
-      .from('maquinas')
-      .insert(limparVazios(maquina))
-      .select()
-      .single()
+    const { data, error } = await supabase.from('maquinas').insert(limparVazios(maquina)).select().single()
     return { data, error }
   }
 }
@@ -204,11 +196,7 @@ export const saveFuncionario = async (
       .single()
     return { data, error }
   } else {
-    const { data, error } = await supabase
-      .from('funcionarios')
-      .insert(limparVazios(func))
-      .select()
-      .single()
+    const { data, error } = await supabase.from('funcionarios').insert(limparVazios(func)).select().single()
     return { data, error }
   }
 }
