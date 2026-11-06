@@ -354,7 +354,9 @@ export const CadastrosView: React.FC = () => {
                   <CardContent className="p-4 space-y-2">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="font-bold text-sm text-foreground">{o.nome || 'Sem nome'}</h3>
+                        <h3 className="font-bold text-sm text-foreground">
+                          {o.nome || 'Sem nome'}
+                        </h3>
                         <p className="text-xs font-semibold text-pepsi-600 dark:text-pepsi-300">
                           Cliente: {cli?.nome || 'Não definido'}
                         </p>
@@ -537,7 +539,9 @@ export const CadastrosView: React.FC = () => {
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-bold text-sm text-foreground">{f.nome || 'Sem nome'}</h3>
-                      <p className="text-xs text-pepsi-600 dark:text-pepsi-300 font-semibold">{f.funcao}</p>
+                      <p className="text-xs text-pepsi-600 dark:text-pepsi-300 font-semibold">
+                        {f.funcao}
+                      </p>
                     </div>
                     <Badge
                       variant={f.ativo ? 'default' : 'secondary'}
@@ -564,7 +568,9 @@ export const CadastrosView: React.FC = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleExcluir('funcionarios', f.id, f.nome || 'colaborador sem nome')}
+                      onClick={() =>
+                        handleExcluir('funcionarios', f.id, f.nome || 'colaborador sem nome')
+                      }
                       className="text-xs h-8 gap-1 font-semibold text-destructive"
                     >
                       <Trash2 className="w-3.5 h-3.5" /> Excluir
@@ -812,7 +818,9 @@ export const CadastrosView: React.FC = () => {
               <div>
                 <Label className="text-xs font-bold">Tipo</Label>
                 <Input
-                  placeholder={ehVeiculoModal ? 'Caminhão, Caçamba, Carro...' : 'Escavadeira, Retro...'}
+                  placeholder={
+                    ehVeiculoModal ? 'Caminhão, Caçamba, Carro...' : 'Escavadeira, Retro...'
+                  }
                   value={modalMaquina.tipo || ''}
                   onChange={(e) => setModalMaquina({ ...modalMaquina, tipo: e.target.value })}
                   className="h-10 text-xs mt-1"

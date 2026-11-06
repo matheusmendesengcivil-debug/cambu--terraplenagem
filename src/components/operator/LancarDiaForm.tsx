@@ -57,7 +57,9 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
   const [funcionarioId, setFuncionarioId] = useState<string>(editing?.funcionario_id || '')
   const [maquinaId, setMaquinaId] = useState<string>(editing?.maquina_id || '')
   const [obraId, setObraId] = useState<string>(editing?.obra_id || '')
-  const [horimetroInicial, setHorimetroInicial] = useState<string>(toStr(editing?.horimetro_inicial))
+  const [horimetroInicial, setHorimetroInicial] = useState<string>(
+    toStr(editing?.horimetro_inicial),
+  )
   const [horimetroFinal, setHorimetroFinal] = useState<string>(toStr(editing?.horimetro_final))
   const [servicosSelecionados, setServicosSelecionados] = useState<string[]>(
     (editing?.servicos || []).map((sv) => sv.id),

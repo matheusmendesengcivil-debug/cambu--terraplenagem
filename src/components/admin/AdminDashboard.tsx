@@ -149,7 +149,10 @@ export const AdminDashboard: React.FC = () => {
       .filter((a) => a.cliente_id === c.id)
       .reduce((acc, a) => acc + Number(a.horas_trabalhadas || 0), 0)
     return {
-      cliente: (c.nome || 'Sem nome').length > 15 ? (c.nome || '').substring(0, 15) + '...' : c.nome || 'Sem nome',
+      cliente:
+        (c.nome || 'Sem nome').length > 15
+          ? (c.nome || '').substring(0, 15) + '...'
+          : c.nome || 'Sem nome',
       horas: Number(total.toFixed(1)),
     }
   })
@@ -500,7 +503,9 @@ export const AdminDashboard: React.FC = () => {
               {horasEConsumoPorMaquina.map((m, idx) => (
                 <tr key={idx} className="hover:bg-muted/40">
                   <td className="p-3 font-bold text-foreground">{m.modelo}</td>
-                  <td className="p-3 text-right font-mono font-bold text-pepsi-600 dark:text-pepsi-300">{m.horas}h</td>
+                  <td className="p-3 text-right font-mono font-bold text-pepsi-600 dark:text-pepsi-300">
+                    {m.horas}h
+                  </td>
                   <td className="p-3 text-right font-mono">{m.litros} L</td>
                   <td className="p-3 text-right font-mono font-bold text-foreground">
                     {m.consumoMedio} L/h
