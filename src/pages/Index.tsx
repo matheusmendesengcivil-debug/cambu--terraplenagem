@@ -123,8 +123,8 @@ export default function Index() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <div className="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center animate-spin mb-3">
-          <HardHat className="w-6 h-6 text-amber-500" />
+        <div className="w-12 h-12 rounded-2xl bg-prata-300/45 flex items-center justify-center animate-spin mb-3">
+          <HardHat className="w-6 h-6 text-pepsi-500" />
         </div>
         <p className="text-xs text-muted-foreground font-semibold">Carregando Cambuí Gestão...</p>
       </div>
@@ -139,14 +139,14 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* TOP APP BAR */}
-      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur border-b border-border shadow-xs px-4 py-2.5 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-gradient-to-r from-prata-100 to-prata-300 dark:from-prata-900 dark:to-prata-800 border-b-2 border-pepsi-600 shadow-xs px-4 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center shadow-xs">
-            <HardHat className="w-5 h-5 text-amber-950" />
+          <div className="w-9 h-9 rounded-xl bg-pepsi-600 flex items-center justify-center shadow-xs">
+            <HardHat className="w-5 h-5 text-white" />
           </div>
           <div>
             <h1 className="text-sm font-black tracking-tight leading-none text-foreground flex items-center gap-1.5">
-              CAMBUÍ <span className="text-amber-500 font-extrabold">TERRAPLENAGEM</span>
+              CAMBUÍ <span className="text-pepsi-500 font-extrabold">TERRAPLENAGEM</span>
             </h1>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-[10px] text-muted-foreground font-bold">
@@ -176,7 +176,7 @@ export default function Index() {
             className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
             title="Alternar tema claro/escuro"
           >
-            {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+            {darkMode ? <Sun className="w-4 h-4 text-pepsi-400" /> : <Moon className="w-4 h-4" />}
           </Button>
 
           {/* Quick role switcher for evaluator */}
@@ -218,7 +218,7 @@ export default function Index() {
             onClick={() => setActiveTab('dashboard')}
             className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 transition-all ${
               activeTab === 'dashboard'
-                ? 'bg-amber-500 text-amber-950 font-black shadow-xs'
+                ? 'bg-pepsi-600 text-white font-black shadow-xs'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -230,7 +230,7 @@ export default function Index() {
             onClick={() => setActiveTab('lancamentos')}
             className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 transition-all ${
               ['lancamentos', 'lancar-dia', 'foto-folha', 'editar-lancamento'].includes(activeTab)
-                ? 'bg-amber-500 text-amber-950 font-black shadow-xs'
+                ? 'bg-pepsi-600 text-white font-black shadow-xs'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -242,7 +242,7 @@ export default function Index() {
             onClick={() => setActiveTab('aprovacoes')}
             className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 transition-all ${
               activeTab === 'aprovacoes'
-                ? 'bg-amber-500 text-amber-950 font-black shadow-xs'
+                ? 'bg-pepsi-600 text-white font-black shadow-xs'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -254,7 +254,7 @@ export default function Index() {
             onClick={() => setActiveTab('cadastros')}
             className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 transition-all ${
               activeTab === 'cadastros'
-                ? 'bg-amber-500 text-amber-950 font-black shadow-xs'
+                ? 'bg-pepsi-600 text-white font-black shadow-xs'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -266,7 +266,7 @@ export default function Index() {
             onClick={() => setActiveTab('fechamento')}
             className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 transition-all ${
               activeTab === 'fechamento'
-                ? 'bg-amber-500 text-amber-950 font-black shadow-xs'
+                ? 'bg-pepsi-600 text-white font-black shadow-xs'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -278,7 +278,7 @@ export default function Index() {
             onClick={() => setActiveTab('abastecimento')}
             className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 transition-all ${
               activeTab === 'abastecimento'
-                ? 'bg-amber-500 text-amber-950 font-black shadow-xs'
+                ? 'bg-pepsi-600 text-white font-black shadow-xs'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -290,7 +290,7 @@ export default function Index() {
             onClick={() => setActiveTab('manutencao')}
             className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 shrink-0 transition-all ${
               activeTab === 'manutencao'
-                ? 'bg-amber-500 text-amber-950 font-black shadow-xs'
+                ? 'bg-pepsi-600 text-white font-black shadow-xs'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -360,7 +360,7 @@ export default function Index() {
                 <div className="grid grid-cols-2 gap-2 max-w-lg mx-auto">
                   <Button
                     onClick={() => setActiveTab('lancar-dia')}
-                    className="h-12 bg-amber-500 hover:bg-amber-600 text-amber-950 font-black gap-2"
+                    className="h-12 bg-pepsi-600 hover:bg-pepsi-700 text-white font-black gap-2"
                   >
                     <Clock className="w-4 h-4" /> Lançar Dia
                   </Button>
@@ -369,7 +369,7 @@ export default function Index() {
                     onClick={() => setActiveTab('foto-folha')}
                     className="h-12 font-bold gap-2 border-2"
                   >
-                    <Camera className="w-4 h-4 text-amber-500" /> Foto / PDF
+                    <Camera className="w-4 h-4 text-pepsi-500" /> Foto / PDF
                   </Button>
                 </div>
                 <MeusLancamentos
@@ -428,7 +428,7 @@ export default function Index() {
           <button
             onClick={() => setActiveTab('home')}
             className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-[10px] font-bold ${
-              activeTab === 'home' ? 'text-amber-500' : 'text-muted-foreground'
+              activeTab === 'home' ? 'text-pepsi-500' : 'text-muted-foreground'
             }`}
           >
             <HardHat className="w-5 h-5" />
@@ -438,7 +438,7 @@ export default function Index() {
           <button
             onClick={() => setActiveTab('lancar-dia')}
             className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-[10px] font-bold ${
-              activeTab === 'lancar-dia' ? 'text-amber-500' : 'text-muted-foreground'
+              activeTab === 'lancar-dia' ? 'text-pepsi-500' : 'text-muted-foreground'
             }`}
           >
             <Clock className="w-5 h-5" />
@@ -448,7 +448,7 @@ export default function Index() {
           <button
             onClick={() => setActiveTab('foto-folha')}
             className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-[10px] font-bold ${
-              activeTab === 'foto-folha' ? 'text-amber-500' : 'text-muted-foreground'
+              activeTab === 'foto-folha' ? 'text-pepsi-500' : 'text-muted-foreground'
             }`}
           >
             <Camera className="w-5 h-5" />
@@ -458,7 +458,7 @@ export default function Index() {
           <button
             onClick={() => setActiveTab('meus-lancamentos')}
             className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-[10px] font-bold ${
-              activeTab === 'meus-lancamentos' ? 'text-amber-500' : 'text-muted-foreground'
+              activeTab === 'meus-lancamentos' ? 'text-pepsi-500' : 'text-muted-foreground'
             }`}
           >
             <CheckSquare className="w-5 h-5" />

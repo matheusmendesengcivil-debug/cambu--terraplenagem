@@ -96,10 +96,10 @@ export const AbastecimentoForm: React.FC<AbastecimentoFormProps> = ({ onBack, on
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Card className="border-2 shadow-sm">
-          <CardHeader className="p-3.5 pb-2 border-b bg-amber-500/10">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200 flex items-center justify-between">
+          <CardHeader className="p-3.5 pb-2 border-b bg-prata-300/25">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-pepsi-900 dark:text-pepsi-200 flex items-center justify-between">
               <span>Máquina / Veículo & Combustível</span>
-              <Fuel className="w-4 h-4 text-amber-500" />
+              <Fuel className="w-4 h-4 text-pepsi-500" />
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3.5 space-y-3">
@@ -155,7 +155,7 @@ export const AbastecimentoForm: React.FC<AbastecimentoFormProps> = ({ onBack, on
                 value={litros}
                 onChange={(e) => setLitros(e.target.value)}
                 placeholder="Ex: 180"
-                className="h-14 text-xl font-mono font-black text-amber-600 mt-1"
+                className="h-14 text-xl font-mono font-black text-pepsi-600 dark:text-pepsi-300 mt-1"
               />
             </div>
 
@@ -221,7 +221,7 @@ export const AbastecimentoForm: React.FC<AbastecimentoFormProps> = ({ onBack, on
         <Button
           type="submit"
           disabled={salvando}
-          className="w-full h-16 text-lg font-black bg-amber-500 hover:bg-amber-600 text-amber-950 rounded-2xl gap-2 shadow-lg uppercase"
+          className="w-full h-16 text-lg font-black bg-pepsi-600 hover:bg-pepsi-700 text-white rounded-2xl gap-2 shadow-lg uppercase"
         >
           <CheckCircle2 className="w-6 h-6" />
           Salvar Abastecimento
