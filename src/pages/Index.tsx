@@ -179,26 +179,6 @@ export default function Index() {
             {darkMode ? <Sun className="w-4 h-4 text-pepsi-400" /> : <Moon className="w-4 h-4" />}
           </Button>
 
-          {/* Quick role switcher for evaluator */}
-          <div className="hidden sm:flex items-center gap-1 mr-1">
-            <Button
-              size="sm"
-              variant={isAdmin ? 'default' : 'outline'}
-              onClick={() => switchUserSimulated('matheus.mendes96@hotmail.com')}
-              className="h-7 text-[10px] px-2 font-bold"
-            >
-              Admin
-            </Button>
-            <Button
-              size="sm"
-              variant={!isAdmin ? 'default' : 'outline'}
-              onClick={() => switchUserSimulated('ze.carlos@cambui.com')}
-              className="h-7 text-[10px] px-2 font-bold"
-            >
-              Operador
-            </Button>
-          </div>
-
           <Button
             variant="ghost"
             size="sm"

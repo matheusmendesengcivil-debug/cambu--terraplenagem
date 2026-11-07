@@ -10,6 +10,7 @@ import {
   getFuncionarios,
   saveAbastecimento,
   getAbastecimentos,
+  getApontamentos,
 } from '@/services/cambui'
 import { Maquina, Funcionario, Abastecimento } from '@/types/cambui'
 import { isVeiculo, nomeEquipamento } from '@/lib/formatters'
@@ -31,6 +32,9 @@ export const AbastecimentoForm: React.FC<AbastecimentoFormProps> = ({ onBack, on
 
   const [maquinaId, setMaquinaId] = useState('')
   const [funcionarioId, setFuncionarioId] = useState('')
+  const [editandoFrentista, setEditandoFrentista] = useState(false)
+  const [operadorId, setOperadorId] = useState('')
+  const [ultimosOperadores, setUltimosOperadores] = useState<Record<string, string>>({})
   const [tipoCombustivel, setTipoCombustivel] = useState<'diesel' | 'gasolina' | 'ARLA'>('diesel')
   const [litros, setLitros] = useState('')
   const [postoLocal, setPostoLocal] = useState('Garagem')
@@ -45,6 +49,14 @@ export const AbastecimentoForm: React.FC<AbastecimentoFormProps> = ({ onBack, on
       setFuncionarios(f)
       const found = f.find((func) => func.usuario_id === user?.id)
       if (found) setFuncionarioId(found.id)
+      try {
+        const aps = await getApontamentos()
+        const mapa: Record<string, string> = {}
+        for (const a of aps) {
+          if (a.maquina_id && a.funcionario_id && !mapa[a.maquina_id]) mapa[a.maquina_id] = a.funcionario_id
+        }
+        setUltimosOperadores(mapa)
+      } catch {}
     }
     init()
   }, [user])
@@ -59,6 +71,7 @@ export const AbastecimentoForm: React.FC<AbastecimentoFormProps> = ({ onBack, on
         data,
         maquina_id: maquinaId || null,
         funcionario_id: funcionarioId || null,
+        operador_id: operadorId || null,
         tipo_combustivel: tipoCombustivel,
         litros: l,
         posto_local: postoLocal.trim() || 'Garagem',
@@ -132,7 +145,11 @@ export const AbastecimentoForm: React.FC<AbastecimentoFormProps> = ({ onBack, on
               <Label className="text-xs font-bold">Máquina / Veículo Abastecido</Label>
               <select
                 value={maquinaId}
-                onChange={(e) => setMaquinaId(e.target.value)}
+                onChange={(e) => {
+                  setMaquinaId(e.target.value)
+                  const op = ultimosOperadores[e.target.value]
+                  if (op) setOperadorId(op)
+                }}
                 className="w-full h-12 text-sm font-bold rounded-md border border-input bg-background px-3 mt-1"
               >
                 <option value="">— Não informado —</option>
@@ -144,6 +161,61 @@ export const AbastecimentoForm: React.FC<AbastecimentoFormProps> = ({ onBack, on
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <Label className="text-xs font-bold">Operador da máquina / veículo</Label>
+              <select
+                value={operadorId}
+                onChange={(e) => setOperadorId(e.target.value)}
+                className="w-full h-12 text-sm font-bold rounded-md border border-input bg-background px-3 mt-1"
+              >
+                <option value="">— Não informado —</option>
+                {funcionarios.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.nome || 'Sem nome'}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label className="text-xs font-bold">Quem abasteceu</Label>
+              {editandoFrentista ? (
+                <select
+                  autoFocus
+                  value={funcionarioId}
+                  onChange={(e) => {
+                    setFuncionarioId(e.target.value)
+                    setEditandoFrentista(false)
+                  }}
+                  className="w-full h-11 text-sm font-bold rounded-md border border-input bg-background px-3 mt-1"
+                >
+                  <option value="">— Não informado —</option>
+                  {funcionarios.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.nome || 'Sem nome'}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="flex items-center justify-between h-11 mt-1 px-3 rounded-md border bg-muted/40">
+                  <span className="text-sm font-bold">
+                    {funcionarios.find((f) => f.id === funcionarioId)?.nome ||
+                      usuario?.nome ||
+                      'Não informado'}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditandoFrentista(true)}
+                    className="h-8 text-xs gap-1"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" /> Editar
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div>
