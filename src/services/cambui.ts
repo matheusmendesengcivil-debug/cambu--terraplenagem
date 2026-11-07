@@ -376,9 +376,11 @@ export const saveApontamento = async (
 ): Promise<{ success: boolean; id: string; offline: boolean; error?: any }> => {
   const isNowOnline = isOnline()
 
-  // Calculate valor_hora if not set
-  let valorHora = apontamento.valor_hora_aplicado || 0
-  if (!valorHora && apontamento.cliente_id && apontamento.maquina_id) {
+  // Calculate valor_hora if not set (null/undefined = buscar preço; 0 digitado = 0)
+  const valorInformado =
+    apontamento.valor_hora_aplicado !== undefined && apontamento.valor_hora_aplicado !== null
+  let valorHora = valorInformado ? Number(apontamento.valor_hora_aplicado) : 0
+  if (!valorInformado && apontamento.cliente_id && apontamento.maquina_id) {
     valorHora = await resolveValorHora(
       apontamento.cliente_id,
       apontamento.obra_id || '',
@@ -386,7 +388,11 @@ export const saveApontamento = async (
     )
   }
   const horas = numOrNull(apontamento.horas_trabalhadas)
-  const valorTotal = valorHora * (horas || 0)
+  const modo = apontamento.modo_medicao || 'horimetro'
+  const diarias = numOrNull(apontamento.diarias)
+  const quantidadeCobrada = modo === 'diaria' ? diarias || 0 : horas || 0
+  const totalInformado = numOrNull(apontamento.valor_total)
+  const valorTotal = totalInformado !== null ? totalInformado : valorHora * quantidadeCobrada
 
   const payload: any = {
     data: apontamento.data || new Date().toISOString().split('T')[0],
@@ -397,6 +403,9 @@ export const saveApontamento = async (
     horimetro_inicial: numOrNull(apontamento.horimetro_inicial),
     horimetro_final: numOrNull(apontamento.horimetro_final),
     horas_trabalhadas: horas,
+    modo_medicao: modo,
+    periodos: apontamento.periodos && apontamento.periodos.length ? apontamento.periodos : null,
+    diarias,
     horas_paradas: apontamento.horas_paradas ? Number(apontamento.horas_paradas) : 0,
     motivo_parada: apontamento.motivo_parada || null,
     quantidade_viagens: apontamento.quantidade_viagens ? Number(apontamento.quantidade_viagens) : 0,
@@ -508,7 +517,9 @@ export const getAbastecimentos = async (): Promise<Abastecimento[]> => {
   try {
     const { data, error } = await supabase
       .from('abastecimentos')
-      .select('*, maquina:maquinas(*), funcionario:funcionarios(*)')
+      .select(
+        '*, maquina:maquinas(*), funcionario:funcionarios!abastecimentos_funcionario_id_fkey(*), operador:funcionarios!abastecimentos_operador_id_fkey(*)',
+      )
       .order('data', { ascending: false })
 
     if (!error && data) {
@@ -530,6 +541,7 @@ export const saveAbastecimento = async (
     data: abast.data || new Date().toISOString().split('T')[0],
     maquina_id: idOrNull(abast.maquina_id),
     funcionario_id: idOrNull(abast.funcionario_id),
+    operador_id: idOrNull(abast.operador_id),
     horimetro_momento: numOrNull(abast.horimetro_momento),
     tipo_combustivel: abast.tipo_combustivel || 'diesel',
     litros: numOrNull(abast.litros),

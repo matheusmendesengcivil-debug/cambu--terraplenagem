@@ -226,7 +226,11 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({
 
                   <div className="text-right">
                     <div className="text-xl font-black text-pepsi-600 dark:text-pepsi-300">
-                      {isVeiculo(ap.maquina)
+                      {ap.modo_medicao === 'diaria'
+                        ? `${String(ap.diarias ?? 0).replace('.', ',')} diária(s)`
+                        : ap.modo_medicao === 'horario' && ap.horas_trabalhadas != null
+                          ? formatHoursShort(ap.horas_trabalhadas)
+                          : isVeiculo(ap.maquina)
                         ? ap.horimetro_final != null && ap.horimetro_inicial != null
                           ? `${(Number(ap.horimetro_final) - Number(ap.horimetro_inicial)).toFixed(1)} km`
                           : '—'
@@ -234,6 +238,16 @@ export const MeusLancamentos: React.FC<MeusLancamentosProps> = ({
                           ? formatHoursShort(ap.horas_trabalhadas)
                           : '—'}
                     </div>
+                    {ap.modo_medicao === 'horario' && ap.periodos && ap.periodos.length > 0 && (
+                      <div className="text-[11px] font-mono text-muted-foreground">
+                        {ap.periodos.map((p) => `${p.inicio}–${p.fim}`).join(' / ')}
+                      </div>
+                    )}
+                    {isAdmin && ap.valor_total != null && (
+                      <div className="text-[11px] font-bold text-foreground">
+                        R$ {Number(ap.valor_total).toFixed(2).replace('.', ',')}
+                      </div>
+                    )}
                     {(ap.horimetro_inicial != null || ap.horimetro_final != null) && (
                       <div className="text-[11px] font-mono text-muted-foreground">
                         {ap.horimetro_inicial ?? '?'}

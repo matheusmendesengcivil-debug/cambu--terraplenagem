@@ -123,67 +123,6 @@ export const LoginView: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* QUICK ACCESS BUTTONS (DEMO CONVENIENCE FOR EVALUATOR) */}
-        <div className="bg-card border rounded-2xl p-4 shadow-sm space-y-2.5">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-            <UserCheck className="w-4 h-4 text-pepsi-500" />
-            Acesso Rápido de Teste (Dados Pré-Carregados)
-          </div>
-
-          <div className="grid grid-cols-1 gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleQuickLogin('matheus.mendes96@hotmail.com')}
-              disabled={loading}
-              className="h-11 justify-between text-xs font-bold bg-prata-300/25 border-prata-400/70 hover:bg-prata-300/45 text-foreground"
-            >
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-pepsi-600 dark:text-pepsi-300" />
-                <span>Admin (Matheus Mendes)</span>
-              </div>
-              <span className="text-[10px] text-muted-foreground font-mono">
-                matheus.mendes96@hotmail.com
-              </span>
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleQuickLogin('ze.carlos@cambui.com')}
-              disabled={loading}
-              className="h-10 justify-between text-xs font-semibold"
-            >
-              <div className="flex items-center gap-2">
-                <HardHat className="w-3.5 h-3.5 text-pepsi-500" />
-                <span>Operador Zé Carlos</span>
-              </div>
-              <span className="text-[10px] text-muted-foreground font-mono">
-                ze.carlos@cambui.com
-              </span>
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleQuickLogin('tiago.pedroso@cambui.com')}
-              disabled={loading}
-              className="h-10 justify-between text-xs font-semibold"
-            >
-              <div className="flex items-center gap-2">
-                <HardHat className="w-3.5 h-3.5 text-pepsi-500" />
-                <span>Operador Tiago (Caminhão)</span>
-              </div>
-              <span className="text-[10px] text-muted-foreground font-mono">
-                tiago.pedroso@cambui.com
-              </span>
-            </Button>
-          </div>
-          <p className="text-[11px] text-center text-muted-foreground pt-1">
-            Senha padrão de teste:{' '}
-            <code className="font-mono bg-muted px-1 py-0.5 rounded">Skip@Pass</code>
-          </p>
-        </div>
       </div>
     </div>
   )

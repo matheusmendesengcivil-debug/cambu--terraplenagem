@@ -74,6 +74,24 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
   )
   const [fotosExistentes] = useState<string[]>((editing?.fotos || []).map((f) => f.url))
   const [fotos, setFotos] = useState<string[]>([])
+  const [modo, setModo] = useState<'horimetro' | 'horario' | 'diaria'>(
+    (editing?.modo_medicao as any) || 'horimetro',
+  )
+  const [periodos, setPeriodos] = useState<{ inicio: string; fim: string }[]>(
+    editing?.periodos && editing.periodos.length
+      ? editing.periodos
+      : [
+          { inicio: '07:00', fim: '12:00' },
+          { inicio: '13:00', fim: '17:00' },
+        ],
+  )
+  const [diarias, setDiarias] = useState<string>(
+    editing?.diarias !== null && editing?.diarias !== undefined ? String(editing.diarias) : '1',
+  )
+  const [valorUnit, setValorUnit] = useState<string>(toStr(editing?.valor_hora_aplicado))
+  const [valorTotalManual, setValorTotalManual] = useState<string>('')
+  const [statusEdit, setStatusEdit] = useState<string>(editing?.status || 'pendente')
+  const [clienteManual, setClienteManual] = useState<string>(editing?.cliente_id || '')
   const [filtroCategoria, setFiltroCategoria] = useState<'todos' | 'maquina' | 'veiculo'>('todos')
 
   // Horimeter warning if different from last recorded
@@ -123,6 +141,9 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
     }
     setMaquinaId(mId)
     const selected = maquinas.find((m) => m.id === mId)
+    if (selected && isAdmin && !valorUnit && modo !== 'diaria') {
+      setValorUnit(String(selected.valor_hora_padrao || ''))
+    }
     if (selected) {
       const hAtual = Number(selected.horimetro_atual || 0)
       if (!editing) setHorimetroInicial(hAtual.toString())
@@ -134,6 +155,20 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
   const hIni = parseFloat(horimetroInicial) || 0
   const hFim = parseFloat(horimetroFinal) || 0
   const horasCalculadas = hFim > hIni ? hFim - hIni : 0
+  const minutos = (t: string) => {
+    const [h, m] = (t || '').split(':').map(Number)
+    return Number.isFinite(h) ? h * 60 + (Number.isFinite(m) ? m : 0) : NaN
+  }
+  const horasPeriodos = periodos.reduce((acc, p) => {
+    const a = minutos(p.inicio)
+    const b = minutos(p.fim)
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return acc
+    return acc + (b >= a ? b - a : b + 1440 - a) / 60
+  }, 0)
+  const numDiarias = parseFloat((diarias || '').replace(',', '.')) || 0
+  const horasDoModo = modo === 'horario' ? horasPeriodos : modo === 'horimetro' ? horasCalculadas : 0
+  const valorUnitNum = parseFloat((valorUnit || '').replace(',', '.')) || 0
+  const valorTotalCalc = valorUnitNum * (modo === 'diaria' ? numDiarias : horasDoModo)
 
   // Selected obra details
   const obraSelecionada = obras.find((o) => o.id === obraId)
@@ -184,23 +219,43 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
           data,
           funcionario_id: funcionarioId || null,
           maquina_id: maquinaId || null,
-          cliente_id: obraSelecionada?.cliente_id || editing?.cliente_id || null,
+          cliente_id: clienteManual || obraSelecionada?.cliente_id || null,
           obra_id: obraId || null,
           horimetro_inicial: horimetroInicial === '' ? null : hIni,
           horimetro_final: horimetroFinal === '' ? null : hFim,
           // Para veículo a diferença é km rodado, não hora trabalhada
-          horas_trabalhadas: temMedicao && !veiculo ? Number(horasCalculadas.toFixed(1)) : null,
+          horas_trabalhadas:
+            modo === 'horario'
+              ? horasPeriodos > 0
+                ? Number(horasPeriodos.toFixed(2))
+                : null
+              : modo === 'horimetro' && temMedicao && !veiculo
+                ? Number(horasCalculadas.toFixed(1))
+                : null,
+          modo_medicao: modo,
+          periodos: modo === 'horario' ? periodos.filter((p) => p.inicio || p.fim) : null,
+          diarias: modo === 'diaria' ? numDiarias : null,
           horas_paradas: horasParadas ? parseFloat(horasParadas) : 0,
           motivo_parada: motivoParada || null,
           quantidade_viagens: quantidadeViagens ? parseInt(quantidadeViagens) : 0,
           descricao,
           // Operador corrigindo um lançamento devolvido: volta para aprovação
-          status: editing
+          status: isAdmin && editing
+            ? (statusEdit as any)
+            : editing
             ? editing.status === 'devolvido' && !isAdmin
               ? 'pendente'
               : editing.status
             : 'pendente',
-          valor_hora_aplicado: editing?.valor_hora_aplicado || undefined,
+          valor_hora_aplicado: isAdmin
+            ? valorUnit === ''
+              ? undefined
+              : valorUnitNum
+            : editing?.valor_hora_aplicado ?? undefined,
+          valor_total:
+            isAdmin && valorTotalManual !== ''
+              ? parseFloat(valorTotalManual.replace(',', '.')) || 0
+              : undefined,
         },
         servicosSelecionados,
         fotos,
@@ -365,7 +420,110 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3 pt-1">
+            <div>
+              <Label className="text-xs font-bold">Como medir</Label>
+              <div className="grid grid-cols-3 gap-1.5 mt-1">
+                {(
+                  [
+                    ['horimetro', veiculo ? 'Km' : 'Horímetro'],
+                    ['horario', 'Horário'],
+                    ['diaria', 'Diária'],
+                  ] as const
+                ).map(([k, l]) => (
+                  <button
+                    type="button"
+                    key={k}
+                    onClick={() => setModo(k)}
+                    className={`h-11 rounded-lg border-2 text-xs font-black ${
+                      modo === k
+                        ? 'border-pepsi-600 bg-pepsi-600 text-white'
+                        : 'border-border bg-card text-muted-foreground'
+                    }`}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {modo === 'horario' && (
+              <div className="space-y-2">
+                {periodos.map((p, i) => (
+                  <div key={i} className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <Label className="text-[11px] font-bold">Início</Label>
+                      <Input
+                        type="time"
+                        value={p.inicio}
+                        onChange={(e) =>
+                          setPeriodos(periodos.map((x, j) => (j === i ? { ...x, inicio: e.target.value } : x)))
+                        }
+                        className="h-12 font-mono font-bold"
+                      />
+                    </div>
+                    <span className="pb-3 text-xs font-bold text-muted-foreground">às</span>
+                    <div className="flex-1">
+                      <Label className="text-[11px] font-bold">Fim</Label>
+                      <Input
+                        type="time"
+                        value={p.fim}
+                        onChange={(e) =>
+                          setPeriodos(periodos.map((x, j) => (j === i ? { ...x, fim: e.target.value } : x)))
+                        }
+                        className="h-12 font-mono font-bold"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-12 px-2 text-destructive"
+                      onClick={() => setPeriodos(periodos.filter((_, j) => j !== i))}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-10 text-xs font-bold"
+                  onClick={() => setPeriodos([...periodos, { inicio: '', fim: '' }])}
+                >
+                  + Adicionar período
+                </Button>
+              </div>
+            )}
+
+            {modo === 'diaria' && (
+              <div>
+                <Label className="text-xs font-bold">Quantidade de diárias</Label>
+                <div className="grid grid-cols-3 gap-1.5 mt-1">
+                  {['0.5', '1'].map((v) => (
+                    <button
+                      type="button"
+                      key={v}
+                      onClick={() => setDiarias(v)}
+                      className={`h-11 rounded-lg border-2 text-xs font-black ${
+                        diarias === v
+                          ? 'border-pepsi-600 bg-prata-300/35 text-foreground'
+                          : 'border-border bg-card text-muted-foreground'
+                      }`}
+                    >
+                      {v === '0.5' ? 'Meia diária' : '1 diária'}
+                    </button>
+                  ))}
+                  <Input
+                    type="number"
+                    step="0.5"
+                    value={diarias}
+                    onChange={(e) => setDiarias(e.target.value)}
+                    className="h-11 text-sm font-bold"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className={`grid grid-cols-2 gap-3 pt-1 ${modo === 'horimetro' ? '' : 'opacity-80'}`}>
               <div>
                 <Label htmlFor="hIni" className="text-xs font-bold">
                   {veiculo ? 'Km Inicial' : 'Horímetro Inicial'}
@@ -401,14 +559,25 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
             <div className="bg-prata-300/35 border-2 border-prata-400/60 rounded-xl p-3 flex items-center justify-between">
               <div>
                 <span className="text-[11px] font-bold text-muted-foreground uppercase">
-                  {veiculo ? 'Km Rodados' : 'Horas Trabalhadas Calculadas'}
+                  {modo === 'diaria'
+                    ? 'Diárias'
+                    : modo === 'horario'
+                      ? 'Horas pelos horários'
+                      : veiculo
+                        ? 'Km Rodados'
+                        : 'Horas Trabalhadas Calculadas'}
                 </span>
-                <div className="text-xs text-muted-foreground">Final menos inicial</div>
+                <div className="text-xs text-muted-foreground">
+                  {modo === 'horimetro' ? 'Final menos inicial' : modo === 'horario' ? 'Soma dos períodos' : 'Meia diária = 0,5'}
+                </div>
               </div>
               <div className="text-right">
                 <div className="text-2xl font-black text-pepsi-600 dark:text-pepsi-300 tracking-tight">
-                  {horasCalculadas.toFixed(1).replace('.', ',')}
-                  {un}
+                  {modo === 'diaria'
+                    ? numDiarias.toString().replace('.', ',')
+                    : modo === 'horario'
+                      ? horasPeriodos.toFixed(1).replace('.', ',') + 'h'
+                      : horasCalculadas.toFixed(1).replace('.', ',') + un}
                 </div>
               </div>
             </div>
@@ -602,6 +771,74 @@ export const LancarDiaForm: React.FC<LancarDiaFormProps> = ({ onBack, onSuccess,
             )}
           </CardContent>
         </Card>
+
+        {isAdmin && (
+          <Card className="border-2 border-pepsi-600/60">
+            <CardHeader className="p-3.5 pb-2 border-b bg-prata-300/25">
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-pepsi-900 dark:text-pepsi-200">
+                7. Valores e situação (admin)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3.5 space-y-3">
+              <div>
+                <Label className="text-xs font-bold">Cliente</Label>
+                <select
+                  value={clienteManual}
+                  onChange={(e) => setClienteManual(e.target.value)}
+                  className="w-full h-11 text-sm font-semibold rounded-md border border-input bg-background px-3 mt-1"
+                >
+                  <option value="">— Do cadastro da obra —</option>
+                  {clientes.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nome || 'Sem nome'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-bold">
+                    {modo === 'diaria' ? 'Valor da diária (R$)' : 'Valor por hora (R$)'}
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder={
+                      maquinaSelecionada ? String(maquinaSelecionada.valor_hora_padrao || '') : 'Ex: 400'
+                    }
+                    value={valorUnit}
+                    onChange={(e) => setValorUnit(e.target.value)}
+                    className="h-12 text-base font-bold mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-bold">Valor total (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder={valorTotalCalc.toFixed(2)}
+                    value={valorTotalManual}
+                    onChange={(e) => setValorTotalManual(e.target.value)}
+                    className="h-12 text-base font-bold mt-1"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs font-bold">Situação</Label>
+                <select
+                  value={statusEdit}
+                  onChange={(e) => setStatusEdit(e.target.value)}
+                  disabled={!editing}
+                  className="w-full h-11 text-sm font-semibold rounded-md border border-input bg-background px-3 mt-1"
+                >
+                  <option value="pendente">Pendente</option>
+                  <option value="aprovado">Aprovado</option>
+                  <option value="devolvido">Devolvido</option>
+                </select>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* BIG SAVE BUTTON */}
         <Button

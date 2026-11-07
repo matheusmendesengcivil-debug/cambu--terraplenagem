@@ -83,6 +83,9 @@ export interface Apontamento {
   horimetro_inicial: number | null
   horimetro_final: number | null
   horas_trabalhadas: number | null
+  modo_medicao?: 'horimetro' | 'horario' | 'diaria' | null
+  periodos?: { inicio: string; fim: string }[] | null
+  diarias?: number | null
   horas_paradas?: number | null
   motivo_parada?: string | null
   quantidade_viagens?: number | null
@@ -123,6 +126,7 @@ export interface Abastecimento {
   data: string
   maquina_id: string | null
   funcionario_id: string | null
+  operador_id?: string | null
   horimetro_momento?: number | null
   tipo_combustivel: 'diesel' | 'gasolina' | 'ARLA'
   litros: number | null
@@ -134,6 +138,7 @@ export interface Abastecimento {
   criado_em?: string
   maquina?: Maquina
   funcionario?: Funcionario
+  operador?: Funcionario
   is_offline?: boolean
 }
 

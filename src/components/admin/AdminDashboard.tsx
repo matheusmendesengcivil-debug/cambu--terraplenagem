@@ -93,8 +93,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([])
 
   useEffect(() => {
-    async function init() {
-      setLoading(true)
+    let ativo = true
+    async function init(silencioso = false) {
+      if (!silencioso) setLoading(true)
       try {
         const [aps, cobs, abasts, manuts, maqs, clis, funcs] = await Promise.all([
           getApontamentos(),
@@ -105,36 +106,62 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           getClientes(),
           getFuncionarios(),
         ])
-        setApontamentos(aps)
-        setCobrancas(cobs)
-        setAbastecimentos(abasts)
-        setManutencoes(manuts)
+        if (!ativo) return
+        const idsMaq = new Set(maqs.map((m) => m.id))
+        const idsCli = new Set(clis.map((c) => c.id))
+        const idsFunc = new Set(funcs.map((f) => f.id))
+        // Só conta o que ainda está ligado a algum cadastro existente
+        setApontamentos(
+          aps.filter(
+            (a) =>
+              (a.maquina_id && idsMaq.has(a.maquina_id)) ||
+              (a.cliente_id && idsCli.has(a.cliente_id)) ||
+              (a.funcionario_id && idsFunc.has(a.funcionario_id)),
+          ),
+        )
+        setCobrancas(cobs.filter((c) => c.cliente_id && idsCli.has(c.cliente_id)))
+        setAbastecimentos(abasts.filter((a) => a.maquina_id && idsMaq.has(a.maquina_id)))
+        setManutencoes(manuts.filter((m) => m.maquina_id && idsMaq.has(m.maquina_id)))
         setMaquinas(maqs)
         setClientes(clis)
         setFuncionarios(funcs)
       } finally {
-        setLoading(false)
+        if (ativo) setLoading(false)
       }
     }
     init()
+    const atualizar = () => {
+      if (document.visibilityState === 'visible') init(true)
+    }
+    window.addEventListener('focus', atualizar)
+    document.addEventListener('visibilitychange', atualizar)
+    const timer = window.setInterval(() => init(true), 30000)
+    return () => {
+      ativo = false
+      window.removeEventListener('focus', atualizar)
+      document.removeEventListener('visibilitychange', atualizar)
+      window.clearInterval(timer)
+    }
   }, [])
 
   // Filter based on period
   const now = new Date()
   const hojeStr = now.toISOString().split('T')[0]
 
-  const filteredApontamentos = apontamentos.filter((a) => {
-    if (periodoFiltro === 'hoje') return a.data === hojeStr
+  const noPeriodo = (dataStr?: string | null) => {
+    if (!dataStr) return periodoFiltro === 'tudo'
+    if (periodoFiltro === 'hoje') return dataStr === hojeStr
     if (periodoFiltro === 'semana') {
-      const d = new Date(a.data)
+      const d = new Date(dataStr)
       const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 3600 * 24))
       return diffDays <= 7
     }
-    if (periodoFiltro === 'mes') {
-      return a.data.startsWith(hojeStr.substring(0, 7))
-    }
+    if (periodoFiltro === 'mes') return dataStr.startsWith(hojeStr.substring(0, 7))
     return true
-  })
+  }
+  const filteredApontamentos = apontamentos.filter((a) => noPeriodo(a.data))
+  const abastPeriodo = abastecimentos.filter((a) => noPeriodo(a.data))
+  const manutPeriodo = manutencoes.filter((m) => noPeriodo(m.data))
 
   // Approved appointments in period
   const aprovados = filteredApontamentos.filter((a) => a.status === 'aprovado')
@@ -160,8 +187,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
   const totalRecebido = cobrancas.reduce((acc, c) => acc + Number(c.valor_pago || 0), 0)
 
-  const gastoCombustivel = abastecimentos.reduce((acc, ab) => acc + Number(ab.valor_total || 0), 0)
-  const gastoManutencao = manutencoes.reduce((acc, m) => acc + Number(m.custo || 0), 0)
+  const gastoCombustivel = abastPeriodo.reduce((acc, ab) => acc + Number(ab.valor_total || 0), 0)
+  const litrosPeriodo = abastPeriodo.reduce((acc, ab) => acc + Number(ab.litros || 0), 0)
+  const gastoManutencao = manutPeriodo.reduce((acc, m) => acc + Number(m.custo || 0), 0)
 
   // Hours per employee chart data
   const horasPorFuncionario = funcionarios.map((f) => {
@@ -196,7 +224,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
       .filter((a) => a.maquina_id === m.id)
       .reduce((acc, a) => acc + Number(a.horas_trabalhadas || 0), 0)
 
-    const litros = abastecimentos
+    const litros = abastPeriodo
       .filter((ab) => ab.maquina_id === m.id)
       .reduce((acc, ab) => acc + Number(ab.litros || 0), 0)
 
@@ -345,15 +373,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
     return {
       titulo,
       resumo: `${lista.length} abastecimento(s) · ${Math.round(litros)} L${valor ? ' · ' + formatCurrency(valor) : ''}`,
-      colunas: ['Data', 'Máquina/Veículo', 'Colaborador', 'Combustível', 'Local', 'Litros'],
+      colunas: ['Data', 'Máquina/Veículo', 'Operador', 'Abasteceu', 'Local', 'Litros'],
       direita: [5],
       linhas: [...lista]
         .sort((a, b) => (b.data || '').localeCompare(a.data || ''))
         .map((a) => [
           formatDateBR(a.data),
           a.maquina?.modelo || '—',
+          a.operador?.nome || '—',
           a.funcionario?.nome || '—',
-          a.tipo_combustivel || '—',
           a.posto_local || '—',
           `${Number(a.litros || 0)} L`,
         ]),
@@ -396,8 +424,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
       receber: () => detalheCobrancas('Total a receber', cobAberto, 'aberto'),
       atrasado: () => detalheCobrancas('Total atrasado', cobAtrasado, 'aberto'),
       recebido: () => detalheCobrancas('Total recebido', cobRecebido, 'pago'),
-      combustivel: () => detalheAbastecimentos('Abastecimentos', abastecimentos),
-      manutencao: () => detalheManutencoes('Gasto com manutenção', manutencoes),
+      combustivel: () => detalheAbastecimentos('Abastecimentos', abastPeriodo),
+      manutencao: () => detalheManutencoes('Gasto com manutenção', manutPeriodo),
       pendentes: () => ({
         ...detalheApontamentos('Pendentes de aprovação', pendentesAprovacao),
         resumo: `${pendentesAprovacao.length} lançamento(s) aguardando aprovação`,
@@ -714,15 +742,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
         >
           <CardHeader className="p-3.5 pb-1">
             <CardTitle className="text-xs font-bold text-muted-foreground flex items-center justify-between">
-              <span>Gasto com Combustível</span>
+              <span>Combustível</span>
               <Fuel className="w-4 h-4 text-pepsi-500" />
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3.5 pt-0">
             <div className="text-xl sm:text-2xl font-black text-pepsi-600 dark:text-pepsi-300 tracking-tight">
-              {formatCurrency(gastoCombustivel)}
+              {Math.round(litrosPeriodo).toLocaleString('pt-BR')} L
             </div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Diesel e insumos</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {abastPeriodo.length} abastecimento(s)
+              {gastoCombustivel > 0 ? ` · ${formatCurrency(gastoCombustivel)}` : ''}
+            </p>
             <VerDetalhes />
           </CardContent>
         </Card>
